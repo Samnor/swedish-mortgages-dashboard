@@ -1,6 +1,5 @@
 import React, { useEffect, useReducer, useState } from "react";
 import { createRoot } from "react-dom/client";
-import ReactECharts from "echarts-for-react";
 import {
   confidenceForBankCount,
   deriveDashboardKpis,
@@ -397,49 +396,44 @@ type AppCopy = {
 
 function RatesPanel({
   labels,
+  locale,
   snapshot,
 }: {
   labels: AppCopy["rates"];
+  locale: Locale;
   snapshot: DashboardSnapshot;
 }) {
-  const chartOption = {
-    animationDuration: 700,
-    grid: { left: 42, right: 24, top: 34, bottom: 34 },
-    tooltip: { trigger: "axis" },
-    xAxis: {
-      type: "category",
-      data: snapshot.rates.map((row) => row.date),
-    },
-    yAxis: {
-      type: "value",
-      axisLabel: { formatter: "{value}%" },
-    },
-    series: [
-      {
-        name: labels.policyRate,
-        type: "line",
-        smooth: true,
-        data: snapshot.rates.map((row) => row.policyRate),
-      },
-      {
-        name: labels.mortgageBond5y,
-        type: "line",
-        smooth: true,
-        data: snapshot.rates.map((row) => row.mortgageBond5y),
-      },
-    ],
-  };
-
-  return <ReactECharts option={chartOption} className="chart" />;
+  return (
+    <LineChart
+      ariaLabel={`${labels.policyRate}, ${labels.mortgageBond5y}`}
+      className="chart"
+      locale={locale}
+      series={[
+        {
+          label: labels.policyRate,
+          values: snapshot.rates.map((row) => row.policyRate),
+          color: "#743a22",
+        },
+        {
+          label: labels.mortgageBond5y,
+          values: snapshot.rates.map((row) => row.mortgageBond5y),
+          color: "#2d5f5d",
+        },
+      ]}
+      xLabels={snapshot.rates.map((row) => row.date)}
+    />
+  );
 }
 
 function InsightCharts({
   labels,
+  locale,
   options,
   range,
   snapshot,
 }: {
   labels: AppCopy["charts"];
+  locale: Locale;
   options: NegotiationOption[];
   range: NegotiationRange;
   snapshot: DashboardSnapshot;
@@ -451,9 +445,11 @@ function InsightCharts({
         title={labels.marketPressure}
         description={labels.marketPressureDescription}
       >
-        <ReactECharts
-          option={marketPressureOption(snapshot, range, labels)}
-          className="insight-chart"
+        <MarketPressureChart
+          labels={labels}
+          locale={locale}
+          range={range}
+          snapshot={snapshot}
         />
       </InsightChart>
       <InsightChart
@@ -461,9 +457,11 @@ function InsightCharts({
         title={labels.durationComparison}
         description={labels.durationComparisonDescription}
       >
-        <ReactECharts
-          option={durationComparisonOption(options, range, labels)}
-          className="insight-chart"
+        <DurationComparisonChart
+          labels={labels}
+          locale={locale}
+          options={options}
+          range={range}
         />
       </InsightChart>
       <InsightChart
@@ -471,10 +469,7 @@ function InsightCharts({
         title={labels.fundingMargin}
         description={labels.fundingMarginDescription}
       >
-        <ReactECharts
-          option={fundingMarginOption(range, labels)}
-          className="insight-chart"
-        />
+        <FundingMarginChart labels={labels} locale={locale} range={range} />
       </InsightChart>
     </section>
   );
@@ -917,6 +912,7 @@ function App() {
       {snapshot && selectedRange ? (
         <InsightCharts
           labels={labels.charts}
+          locale={locale}
           options={negotiationOptions}
           range={selectedRange}
           snapshot={snapshot}
@@ -976,7 +972,7 @@ function App() {
           ) : null}
         </div>
         {snapshot ? (
-          <RatesPanel labels={labels.rates} snapshot={snapshot} />
+          <RatesPanel labels={labels.rates} locale={locale} snapshot={snapshot} />
         ) : (
           <div className="chart" />
         )}
@@ -985,142 +981,444 @@ function App() {
   );
 }
 
-function marketPressureOption(
-  snapshot: DashboardSnapshot,
-  range: NegotiationRange,
-  labels: AppCopy["charts"],
-) {
-  return {
-    animationDuration: 700,
-    grid: { left: 42, right: 20, top: 34, bottom: 34 },
-    legend: { top: 0 },
-    tooltip: { trigger: "axis" },
-    xAxis: {
-      type: "category",
-      data: snapshot.rates.map((row) => row.date),
-    },
-    yAxis: {
-      type: "value",
-      axisLabel: { formatter: "{value}%" },
-    },
-    series: [
-      {
-        name: labels.policyRate,
-        type: "line",
-        smooth: true,
-        data: snapshot.rates.map((row) => row.policyRate),
-      },
-      {
-        name: labels.coveredBondProxy,
-        type: "line",
-        smooth: true,
-        data: snapshot.rates.map((row) => row.mortgageBond5y),
-      },
-      {
-        name: `${range.option.periodLabelDisplay} ${labels.target}`,
-        type: "line",
-        symbol: "none",
-        lineStyle: { type: "dashed", width: 2 },
-        data: snapshot.rates.map(() => range.midpointRate),
-      },
-    ],
-  };
+function MarketPressureChart({
+  labels,
+  locale,
+  range,
+  snapshot,
+}: {
+  labels: AppCopy["charts"];
+  locale: Locale;
+  range: NegotiationRange;
+  snapshot: DashboardSnapshot;
+}) {
+  return (
+    <LineChart
+      ariaLabel={labels.marketPressure}
+      className="insight-chart"
+      locale={locale}
+      series={[
+        {
+          label: labels.policyRate,
+          values: snapshot.rates.map((row) => row.policyRate),
+          color: "#743a22",
+        },
+        {
+          label: labels.coveredBondProxy,
+          values: snapshot.rates.map((row) => row.mortgageBond5y),
+          color: "#2d5f5d",
+        },
+        {
+          dashed: true,
+          label: `${range.option.periodLabelDisplay} ${labels.target}`,
+          values: snapshot.rates.map(() => range.midpointRate),
+          color: "#d08a24",
+        },
+      ]}
+      xLabels={snapshot.rates.map((row) => row.date)}
+    />
+  );
 }
 
-function durationComparisonOption(
-  options: NegotiationOption[],
-  range: NegotiationRange,
-  labels: AppCopy["charts"],
-) {
-  return {
-    animationDuration: 700,
-    grid: { left: 42, right: 20, top: 34, bottom: 34 },
-    legend: { top: 0 },
-    tooltip: { trigger: "axis" },
-    xAxis: {
-      type: "category",
-      data: options.map((option) => option.periodLabelDisplay),
-    },
-    yAxis: {
-      type: "value",
-      axisLabel: { formatter: "{value}%" },
-    },
-    series: [
-      {
-        name: labels.medianListed,
-        type: "bar",
-        data: options.map((option) => option.medianListRate),
-      },
-      {
-        name: labels.negotiationTarget,
-        type: "line",
-        smooth: true,
-        data: options.map((option) => deriveNegotiationRange(option).midpointRate),
-      },
-      {
-        name: labels.selected,
-        type: "scatter",
-        symbolSize: 18,
-        data: options.map((option) =>
-          option.periodLabel === range.option.periodLabel
-            ? deriveNegotiationRange(option).midpointRate
-            : null,
-        ),
-      },
-    ],
-  };
+function DurationComparisonChart({
+  labels,
+  locale,
+  options,
+  range,
+}: {
+  labels: AppCopy["charts"];
+  locale: Locale;
+  options: NegotiationOption[];
+  range: NegotiationRange;
+}) {
+  const targetValues = options.map((option) =>
+    deriveNegotiationRange(option).midpointRate,
+  );
+
+  return (
+    <BarLineChart
+      ariaLabel={labels.durationComparison}
+      bars={{
+        label: labels.medianListed,
+        values: options.map((option) => option.medianListRate),
+        color: "#d7c3a2",
+      }}
+      line={{
+        label: labels.negotiationTarget,
+        values: targetValues,
+        color: "#743a22",
+      }}
+      locale={locale}
+      selectedIndex={options.findIndex(
+        (option) => option.periodLabel === range.option.periodLabel,
+      )}
+      selectedLabel={labels.selected}
+      xLabels={options.map((option) => option.periodLabelDisplay)}
+    />
+  );
 }
 
-function fundingMarginOption(range: NegotiationRange, labels: AppCopy["charts"]) {
-  const marginLow = range.floorRate - range.option.medianFundingCost;
-  const marginHigh = range.ceilingRate - range.option.medianFundingCost;
+function FundingMarginChart({
+  labels,
+  locale,
+  range,
+}: {
+  labels: AppCopy["charts"];
+  locale: Locale;
+  range: NegotiationRange;
+}) {
+  const fundingCost = range.option.medianFundingCost;
+  const totalValues = [
+    range.floorRate,
+    range.midpointRate,
+    range.ceilingRate,
+    range.option.medianListRate,
+  ];
+  const marginValues = totalValues.map((value) =>
+    Math.max(0, value - fundingCost),
+  );
 
-  return {
-    animationDuration: 700,
-    grid: { left: 42, right: 20, top: 34, bottom: 34 },
-    legend: { top: 0 },
-    tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "shadow" },
-    },
-    xAxis: {
-      type: "category",
-      data: [
+  return (
+    <StackedBarChart
+      ariaLabel={labels.fundingMargin}
+      base={{
+        label: labels.fundingProxy,
+        values: totalValues.map(() => fundingCost),
+        color: "#2d5f5d",
+      }}
+      locale={locale}
+      stack={{
+        label: labels.marginRoom,
+        values: marginValues,
+        color: "#d08a24",
+      }}
+      xLabels={[
         labels.floor,
         labels.targetLabel,
         labels.ceiling,
         labels.medianListed,
-      ],
-    },
-    yAxis: {
-      type: "value",
-      axisLabel: { formatter: "{value}%" },
-    },
-    series: [
-      {
-        name: labels.fundingProxy,
-        type: "bar",
-        stack: "rate",
-        data: [
-          range.option.medianFundingCost,
-          range.option.medianFundingCost,
-          range.option.medianFundingCost,
-          range.option.medianFundingCost,
-        ],
-      },
-      {
-        name: labels.marginRoom,
-        type: "bar",
-        stack: "rate",
-        data: [
-          Math.max(0, marginLow),
-          Math.max(0, range.midpointRate - range.option.medianFundingCost),
-          Math.max(0, marginHigh),
-          Math.max(0, range.option.medianListRate - range.option.medianFundingCost),
-        ],
-      },
-    ],
+      ]}
+    />
+  );
+}
+
+function LineChart({
+  ariaLabel,
+  className,
+  locale,
+  series,
+  xLabels,
+}: {
+  ariaLabel: string;
+  className: string;
+  locale: Locale;
+  series: Array<{
+    color: string;
+    dashed?: boolean;
+    label: string;
+    values: number[];
+  }>;
+  xLabels: string[];
+}) {
+  const geometry = chartGeometry(series.flatMap((item) => item.values));
+
+  return (
+    <figure className={className} aria-label={ariaLabel}>
+      <svg
+        className="svg-chart"
+        role="img"
+        viewBox={`0 0 ${geometry.width} ${geometry.height}`}
+      >
+        <ChartGrid geometry={geometry} locale={locale} />
+        {series.map((item) => (
+          <path
+            className="chart-line"
+            d={linePath(item.values, geometry)}
+            fill="none"
+            key={item.label}
+            stroke={item.color}
+            strokeDasharray={item.dashed ? "6 6" : undefined}
+          />
+        ))}
+        <XAxisLabels geometry={geometry} labels={xLabels} />
+      </svg>
+      <ChartLegend series={series} />
+    </figure>
+  );
+}
+
+function BarLineChart({
+  ariaLabel,
+  bars,
+  line,
+  locale,
+  selectedIndex,
+  selectedLabel,
+  xLabels,
+}: {
+  ariaLabel: string;
+  bars: { color: string; label: string; values: number[] };
+  line: { color: string; label: string; values: number[] };
+  locale: Locale;
+  selectedIndex: number;
+  selectedLabel: string;
+  xLabels: string[];
+}) {
+  const geometry = chartGeometry([...bars.values, ...line.values]);
+  const barWidth = Math.max(14, geometry.plotWidth / bars.values.length / 2.6);
+
+  return (
+    <figure className="insight-chart" aria-label={ariaLabel}>
+      <svg
+        className="svg-chart"
+        role="img"
+        viewBox={`0 0 ${geometry.width} ${geometry.height}`}
+      >
+        <ChartGrid geometry={geometry} locale={locale} />
+        {bars.values.map((value, index) => {
+          const x = xForIndex(index, bars.values.length, geometry) - barWidth / 2;
+          const y = yForValue(value, geometry);
+          return (
+            <rect
+              className="chart-bar"
+              fill={bars.color}
+              height={geometry.bottom - y}
+              key={`${xLabels[index]}-${value}`}
+              rx="4"
+              width={barWidth}
+              x={x}
+              y={y}
+            />
+          );
+        })}
+        <path
+          className="chart-line"
+          d={linePath(line.values, geometry)}
+          fill="none"
+          stroke={line.color}
+        />
+        {selectedIndex >= 0 ? (
+          <circle
+            className="chart-point"
+            cx={xForIndex(selectedIndex, line.values.length, geometry)}
+            cy={yForValue(line.values[selectedIndex], geometry)}
+            fill="#17211f"
+            r="5"
+          />
+        ) : null}
+        <XAxisLabels geometry={geometry} labels={xLabels} />
+      </svg>
+      <ChartLegend
+        series={[
+          { color: bars.color, label: bars.label },
+          { color: line.color, label: line.label },
+          { color: "#17211f", label: selectedLabel },
+        ]}
+      />
+    </figure>
+  );
+}
+
+function StackedBarChart({
+  ariaLabel,
+  base,
+  locale,
+  stack,
+  xLabels,
+}: {
+  ariaLabel: string;
+  base: { color: string; label: string; values: number[] };
+  locale: Locale;
+  stack: { color: string; label: string; values: number[] };
+  xLabels: string[];
+}) {
+  const totals = base.values.map((value, index) => value + stack.values[index]);
+  const geometry = chartGeometry(totals);
+  const barWidth = Math.max(20, geometry.plotWidth / totals.length / 2.4);
+
+  return (
+    <figure className="insight-chart" aria-label={ariaLabel}>
+      <svg
+        className="svg-chart"
+        role="img"
+        viewBox={`0 0 ${geometry.width} ${geometry.height}`}
+      >
+        <ChartGrid geometry={geometry} locale={locale} />
+        {totals.map((total, index) => {
+          const x = xForIndex(index, totals.length, geometry) - barWidth / 2;
+          const baseTop = yForValue(base.values[index], geometry);
+          const stackTop = yForValue(total, geometry);
+          return (
+            <g key={`${xLabels[index]}-${total}`}>
+              <rect
+                className="chart-bar"
+                fill={base.color}
+                height={geometry.bottom - baseTop}
+                rx="4"
+                width={barWidth}
+                x={x}
+                y={baseTop}
+              />
+              <rect
+                className="chart-bar"
+                fill={stack.color}
+                height={baseTop - stackTop}
+                rx="4"
+                width={barWidth}
+                x={x}
+                y={stackTop}
+              />
+            </g>
+          );
+        })}
+        <XAxisLabels geometry={geometry} labels={xLabels} />
+      </svg>
+      <ChartLegend
+        series={[
+          { color: base.color, label: base.label },
+          { color: stack.color, label: stack.label },
+        ]}
+      />
+    </figure>
+  );
+}
+
+type ChartGeometry = {
+  bottom: number;
+  height: number;
+  left: number;
+  max: number;
+  min: number;
+  plotHeight: number;
+  plotWidth: number;
+  right: number;
+  top: number;
+  width: number;
+};
+
+function chartGeometry(values: number[]): ChartGeometry {
+  const finiteValues = values.filter(Number.isFinite);
+  const minValue = Math.min(...finiteValues);
+  const maxValue = Math.max(...finiteValues);
+  const padding = Math.max(0.15, (maxValue - minValue) * 0.16);
+  const min = Math.max(0, minValue - padding);
+  const max = maxValue + padding;
+  const width = 640;
+  const height = 300;
+  const left = 46;
+  const right = 18;
+  const top = 18;
+  const bottom = 248;
+
+  return {
+    bottom,
+    height,
+    left,
+    max,
+    min,
+    plotHeight: bottom - top,
+    plotWidth: width - left - right,
+    right,
+    top,
+    width,
   };
+}
+
+function ChartGrid({
+  geometry,
+  locale,
+}: {
+  geometry: ChartGeometry;
+  locale: Locale;
+}) {
+  const ticks = [0, 0.5, 1].map(
+    (ratio) => geometry.min + (geometry.max - geometry.min) * ratio,
+  );
+
+  return (
+    <g className="chart-grid">
+      {ticks.map((tick) => {
+        const y = yForValue(tick, geometry);
+        return (
+          <g key={tick}>
+            <line
+              x1={geometry.left}
+              x2={geometry.width - geometry.right}
+              y1={y}
+              y2={y}
+            />
+            <text x={geometry.left - 8} y={y + 4}>
+              {formatRate(tick, locale)}
+            </text>
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+function XAxisLabels({
+  geometry,
+  labels,
+}: {
+  geometry: ChartGeometry;
+  labels: string[];
+}) {
+  if (labels.length === 0) return null;
+  const indexes = Array.from(
+    new Set([0, Math.floor((labels.length - 1) / 2), labels.length - 1]),
+  );
+
+  return (
+    <g className="chart-axis-labels">
+      {indexes.map((index) => (
+        <text
+          key={`${labels[index]}-${index}`}
+          textAnchor={index === 0 ? "start" : index === labels.length - 1 ? "end" : "middle"}
+          x={xForIndex(index, labels.length, geometry)}
+          y={geometry.bottom + 28}
+        >
+          {labels[index]}
+        </text>
+      ))}
+    </g>
+  );
+}
+
+function ChartLegend({
+  series,
+}: {
+  series: Array<{ color: string; label: string }>;
+}) {
+  return (
+    <figcaption className="chart-legend">
+      {series.map((item) => (
+        <span key={item.label}>
+          <i style={{ background: item.color }} />
+          {item.label}
+        </span>
+      ))}
+    </figcaption>
+  );
+}
+
+function linePath(values: number[], geometry: ChartGeometry): string {
+  return values
+    .map((value, index) => {
+      const command = index === 0 ? "M" : "L";
+      return `${command} ${xForIndex(index, values.length, geometry)} ${yForValue(value, geometry)}`;
+    })
+    .join(" ");
+}
+
+function xForIndex(index: number, count: number, geometry: ChartGeometry): number {
+  if (count <= 1) return geometry.left + geometry.plotWidth / 2;
+  return geometry.left + (index / (count - 1)) * geometry.plotWidth;
+}
+
+function yForValue(value: number, geometry: ChartGeometry): number {
+  const range = geometry.max - geometry.min || 1;
+  return geometry.bottom - ((value - geometry.min) / range) * geometry.plotHeight;
 }
 
 function numberFormatter(locale: Locale) {

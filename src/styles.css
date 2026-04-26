@@ -391,7 +391,68 @@ code {
 }
 
 .insight-chart {
+  display: block;
   min-height: 300px;
+}
+
+.svg-chart {
+  display: block;
+  width: 100%;
+  height: 300px;
+  overflow: visible;
+}
+
+.chart-grid line {
+  stroke: rgba(23, 33, 31, 0.12);
+  stroke-width: 1;
+}
+
+.chart-grid text,
+.chart-axis-labels text {
+  fill: #53615d;
+  font-family: "Courier New", monospace;
+  font-size: 0.72rem;
+}
+
+.chart-grid text {
+  text-anchor: end;
+}
+
+.chart-line {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.chart-bar {
+  opacity: 0.92;
+}
+
+.chart-point {
+  stroke: #fbf4e7;
+  stroke-width: 3;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 10px;
+  color: #53615d;
+  font-size: 0.86rem;
+}
+
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
 }
 
 .source-panel {
@@ -501,6 +562,7 @@ code {
 }
 
 .chart {
+  display: block;
   min-height: 360px;
 }
 
