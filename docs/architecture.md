@@ -21,19 +21,24 @@ dbt prod/dev marts
 
 ## Initial Data Contracts
 
-Planned JSON snapshots:
+Initial JSON snapshot:
 
-- `summary.json`
-- `rates_timeseries.json`
-- `bank_margin_snapshot.json`
-- `freshness.json`
+- `data/latest.json`
 
-Each file should include:
+The file should include:
 
 ```json
 {
-  "generated_at": "2026-04-26T00:00:00Z",
-  "source": "swedish_mortgages_prod_marts.rates_daily",
-  "rows": []
+  "generatedAt": "2026-04-26T00:00:00Z",
+  "rates": [
+    {
+      "date": "2026-04-26",
+      "policyRate": 2.25,
+      "mortgageBond5y": 2.68
+    }
+  ]
 }
 ```
+
+More files can be added later, but the first pass should keep one snapshot so
+the state machine remains easy to reason about.

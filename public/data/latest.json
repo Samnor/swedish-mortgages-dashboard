@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-04-26T00:00:00Z",
+  "rates": [
+    {
+      "date": "2026-04-20",
+      "policyRate": 2.25,
+      "mortgageBond5y": 2.71
+    },
+    {
+      "date": "2026-04-21",
+      "policyRate": 2.25,
+      "mortgageBond5y": 2.73
+    },
+    {
+      "date": "2026-04-22",
+      "policyRate": 2.25,
+      "mortgageBond5y": 2.7
+    },
+    {
+      "date": "2026-04-23",
+      "policyRate": 2.25,
+      "mortgageBond5y": 2.69
+    },
+    {
+      "date": "2026-04-24",
+      "policyRate": 2.25,
+      "mortgageBond5y": 2.68
+    }
+  ]
+}

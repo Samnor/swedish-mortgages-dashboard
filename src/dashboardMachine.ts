@@ -57,6 +57,26 @@ export function assertStateMachineComplexity(): void {
 
 assertStateMachineComplexity();
 
+export function parseDashboardSnapshot(input: unknown): DashboardSnapshot {
+  if (!isRecord(input)) {
+    throw new Error("Dashboard snapshot must be an object.");
+  }
+
+  const generatedAt = input.generatedAt ?? input.generated_at;
+  if (typeof generatedAt !== "string") {
+    throw new Error("Dashboard snapshot is missing generatedAt.");
+  }
+
+  if (!Array.isArray(input.rates)) {
+    throw new Error("Dashboard snapshot is missing rates.");
+  }
+
+  return {
+    generatedAt,
+    rates: input.rates.map(parseRatePoint),
+  };
+}
+
 export function transition(
   state: DashboardState,
   event: DashboardEvent,
@@ -101,6 +121,46 @@ export function transition(
   }
 }
 
+function parseRatePoint(input: unknown): RatePoint {
+  if (!isRecord(input)) {
+    throw new Error("Rate point must be an object.");
+  }
+
+  const date = readString(input, "date");
+  const policyRate = readNumber(input, "policyRate", "policy_rate");
+  const mortgageBond5y = readNumber(
+    input,
+    "mortgageBond5y",
+    "mortgage_bond_5y",
+  );
+
+  return { date, policyRate, mortgageBond5y };
+}
+
+function readString(input: Record<string, unknown>, key: string): string {
+  const value = input[key];
+  if (typeof value !== "string") {
+    throw new Error(`Expected ${key} to be a string.`);
+  }
+  return value;
+}
+
+function readNumber(
+  input: Record<string, unknown>,
+  primaryKey: string,
+  fallbackKey: string,
+): number {
+  const value = input[primaryKey] ?? input[fallbackKey];
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    throw new Error(`Expected ${primaryKey} to be a number.`);
+  }
+  return value;
+}
+
+function isRecord(input: unknown): input is Record<string, unknown> {
+  return typeof input === "object" && input !== null && !Array.isArray(input);
+}
+
 export function snapshotStaleReason(snapshot: DashboardSnapshot): string | null {
   const generatedAt = Date.parse(snapshot.generatedAt);
   if (Number.isNaN(generatedAt)) return "Snapshot timestamp is invalid.";
@@ -111,14 +171,3 @@ export function snapshotStaleReason(snapshot: DashboardSnapshot): string | null 
   }
   return null;
 }
-
-export const sampleSnapshot: DashboardSnapshot = {
-  generatedAt: new Date().toISOString(),
-  rates: [
-    { date: "2026-04-20", policyRate: 2.25, mortgageBond5y: 2.71 },
-    { date: "2026-04-21", policyRate: 2.25, mortgageBond5y: 2.73 },
-    { date: "2026-04-22", policyRate: 2.25, mortgageBond5y: 2.7 },
-    { date: "2026-04-23", policyRate: 2.25, mortgageBond5y: 2.69 },
-    { date: "2026-04-24", policyRate: 2.25, mortgageBond5y: 2.68 },
-  ],
-};

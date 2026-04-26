@@ -3,12 +3,14 @@ import { createRoot } from "react-dom/client";
 import ReactECharts from "echarts-for-react";
 import {
   maxOutgoingTransitions,
-  sampleSnapshot,
+  parseDashboardSnapshot,
   stateComplexity,
   transition,
   type DashboardSnapshot,
 } from "./dashboardMachine";
 import "./styles.css";
+
+const snapshotUrl = `${import.meta.env.BASE_URL}data/latest.json`;
 
 function RatesPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   const chartOption = {
@@ -46,8 +48,36 @@ function App() {
   const [state, dispatch] = useReducer(transition, { value: "idle" });
 
   useEffect(() => {
-    dispatch({ type: "START" });
-    dispatch({ type: "LOAD_SUCCEEDED", snapshot: sampleSnapshot });
+    const controller = new AbortController();
+
+    async function loadSnapshot() {
+      dispatch({ type: "START" });
+      try {
+        const response = await fetch(snapshotUrl, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error(`Snapshot request failed with ${response.status}.`);
+        }
+        const rawSnapshot: unknown = await response.json();
+        dispatch({
+          type: "LOAD_SUCCEEDED",
+          snapshot: parseDashboardSnapshot(rawSnapshot),
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        dispatch({
+          type: "LOAD_FAILED",
+          message:
+            error instanceof Error ? error.message : "Snapshot loading failed.",
+        });
+      }
+    }
+
+    void loadSnapshot();
+
+    return () => controller.abort();
   }, []);
 
   const snapshot =
@@ -69,9 +99,8 @@ function App() {
           <p className="eyebrow">Preview</p>
           <h2>Rate environment</h2>
           <p>
-            State: <strong>{state.value}</strong>. This shell uses sample data
-            until the export job writes production JSON snapshots from the
-            mortgage marts.
+            State: <strong>{state.value}</strong>. The dashboard reads a public
+            JSON snapshot from <code>{snapshotUrl}</code>.
           </p>
           <p>
             State machine complexity: max {maxOutgoingTransitions} outgoing

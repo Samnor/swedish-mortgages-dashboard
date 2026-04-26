@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -23,12 +23,37 @@ def main() -> None:
 
     args.output.mkdir(parents=True, exist_ok=True)
     payload = {
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
         "environment": args.environment,
-        "generated_at": datetime.now(UTC).isoformat(),
-        "status": "placeholder",
-        "rows": [],
+        "rates": [
+            {
+                "date": "2026-04-20",
+                "policyRate": 2.25,
+                "mortgageBond5y": 2.71,
+            },
+            {
+                "date": "2026-04-21",
+                "policyRate": 2.25,
+                "mortgageBond5y": 2.73,
+            },
+            {
+                "date": "2026-04-22",
+                "policyRate": 2.25,
+                "mortgageBond5y": 2.70,
+            },
+            {
+                "date": "2026-04-23",
+                "policyRate": 2.25,
+                "mortgageBond5y": 2.69,
+            },
+            {
+                "date": "2026-04-24",
+                "policyRate": 2.25,
+                "mortgageBond5y": 2.68,
+            },
+        ],
     }
-    (args.output / "summary.json").write_text(json.dumps(payload, indent=2) + "\n")
+    (args.output / "latest.json").write_text(json.dumps(payload, indent=2) + "\n")
 
 
 if __name__ == "__main__":
