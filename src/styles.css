@@ -579,8 +579,43 @@ code {
 .insight-chart {
   display: block;
   width: 100%;
-  min-height: 300px;
-  margin: 16px 0 0;
+  min-height: 260px;
+  margin: 12px 0 0;
+}
+
+.chart-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0 4px;
+}
+
+.chart-summary div {
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid rgba(23, 33, 31, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.chart-summary dt {
+  overflow: hidden;
+  color: #743a22;
+  font-family: "Courier New", monospace;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.chart-summary dd {
+  margin: 4px 0 0;
+  color: #17211f;
+  font-family: "Courier New", monospace;
+  font-size: 1rem;
+  font-weight: 900;
 }
 
 .svg-chart {
@@ -827,7 +862,7 @@ code {
   }
 
   .insight-chart {
-    min-height: 220px;
+    min-height: 190px;
   }
 
   .chart {
@@ -835,8 +870,30 @@ code {
   }
 
   .svg-chart {
-    height: 220px;
+    height: 190px;
     overflow: hidden;
+  }
+
+  .chart-summary {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .chart-summary div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    padding: 8px 10px;
+  }
+
+  .chart-summary dt {
+    font-size: 0.62rem;
+  }
+
+  .chart-summary dd {
+    margin: 0;
+    font-size: 0.95rem;
   }
 
   .diagnostics-panel .svg-chart {

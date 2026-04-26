@@ -55,7 +55,8 @@ type AppCopy = {
     | "marginRoom"
     | "floor"
     | "targetLabel"
-    | "ceiling",
+    | "ceiling"
+    | "gapToMedian",
     string
   >;
   flow: Record<
@@ -154,6 +155,7 @@ const copy = {
       floor: "Golv",
       targetLabel: "Mål",
       ceiling: "Tak",
+      gapToMedian: "Gap mot median",
     },
     flow: {
       label: "Bolåneflöde",
@@ -322,6 +324,7 @@ const copy = {
       floor: "Floor",
       targetLabel: "Target",
       ceiling: "Ceiling",
+      gapToMedian: "Gap to median",
     },
     flow: {
       label: "Mortgage flow",
@@ -970,19 +973,33 @@ function renderMarketPressureChart(
   range: NegotiationRange,
   snapshot: DashboardSnapshot,
 ): string {
-  return lineChart({
+  const latestPolicyRate = lastValue(snapshot.rates.map((row) => row.policyRate));
+  const latestFundingProxy = lastValue(
+    snapshot.rates.map((row) => row.mortgageBond5y),
+  );
+
+  return (
+    renderChartSummary([
+      { label: labels.policyRate, value: formatRate(latestPolicyRate) },
+      { label: labels.coveredBondProxy, value: formatRate(latestFundingProxy) },
+      {
+        label: `${range.option.periodLabelDisplay} ${labels.target}`,
+        value: formatRate(range.midpointRate),
+      },
+    ]) +
+    lineChart({
     ariaLabel: labels.marketPressure,
     className: "insight-chart",
     series: [
       {
         label: labels.policyRate,
-        valueLabel: formatRate(lastValue(snapshot.rates.map((row) => row.policyRate))),
+        valueLabel: formatRate(latestPolicyRate),
         values: snapshot.rates.map((row) => row.policyRate),
         color: "#743a22",
       },
       {
         label: labels.coveredBondProxy,
-        valueLabel: formatRate(lastValue(snapshot.rates.map((row) => row.mortgageBond5y))),
+        valueLabel: formatRate(latestFundingProxy),
         values: snapshot.rates.map((row) => row.mortgageBond5y),
         color: "#2d5f5d",
       },
@@ -995,7 +1012,8 @@ function renderMarketPressureChart(
       },
     ],
     xLabels: snapshot.rates.map((row) => row.date),
-  });
+    })
+  );
 }
 
 function renderDurationComparisonChart(
@@ -1003,7 +1021,19 @@ function renderDurationComparisonChart(
   options: NegotiationOption[],
   range: NegotiationRange,
 ): string {
-  return barLineChart({
+  return (
+    renderChartSummary([
+      {
+        label: `${range.option.periodLabelDisplay} ${labels.medianListed}`,
+        value: formatRate(range.option.medianListRate),
+      },
+      { label: labels.negotiationTarget, value: formatRate(range.midpointRate) },
+      {
+        label: labels.gapToMedian,
+        value: formatPoint(range.discountFromMedianListRate),
+      },
+    ]) +
+    barLineChart({
     ariaLabel: labels.durationComparison,
     bars: {
       label: labels.medianListed,
@@ -1022,7 +1052,8 @@ function renderDurationComparisonChart(
     ),
     selectedLabel: labels.selected,
     xLabels: options.map((option) => option.periodLabelDisplay),
-  });
+    })
+  );
 }
 
 function renderFundingMarginChart(
@@ -1030,13 +1061,20 @@ function renderFundingMarginChart(
   range: NegotiationRange,
 ): string {
   const fundingCost = range.option.medianFundingCost;
+  const targetMargin = Math.max(0, range.midpointRate - fundingCost);
   const totalValues = [
     range.floorRate,
     range.midpointRate,
     range.ceilingRate,
     range.option.medianListRate,
   ];
-  return stackedBarChart({
+  return (
+    renderChartSummary([
+      { label: labels.fundingProxy, value: formatRate(fundingCost) },
+      { label: labels.marginRoom, value: formatPoint(targetMargin) },
+      { label: labels.medianListed, value: formatRate(range.option.medianListRate) },
+    ]) +
+    stackedBarChart({
     ariaLabel: labels.fundingMargin,
     base: {
       label: labels.fundingProxy,
@@ -1046,7 +1084,7 @@ function renderFundingMarginChart(
     },
     stack: {
       label: labels.marginRoom,
-      valueLabel: formatRate(Math.max(0, range.midpointRate - fundingCost)),
+      valueLabel: formatPoint(targetMargin),
       values: totalValues.map((value) => Math.max(0, value - fundingCost)),
       color: "#d08a24",
     },
@@ -1056,7 +1094,25 @@ function renderFundingMarginChart(
       labels.ceiling,
       labels.medianListed,
     ],
-  });
+    })
+  );
+}
+
+function renderChartSummary(items: Array<{ label: string; value: string }>): string {
+  return `
+    <dl class="chart-summary">
+      ${items
+        .map(
+          (item) => `
+            <div>
+              <dt>${escapeHtml(item.label)}</dt>
+              <dd>${escapeHtml(item.value)}</dd>
+            </div>
+          `,
+        )
+        .join("")}
+    </dl>
+  `;
 }
 
 type ChartGeometry = {
@@ -1325,6 +1381,10 @@ function formatDelta(delta: number | null): string {
   if (delta === null) return copy[locale].diagnostics.unavailable;
   const prefix = delta > 0 ? "+" : "";
   return `${prefix}${numberFormatter().format(delta)} pp`;
+}
+
+function formatPoint(value: number): string {
+  return `${numberFormatter().format(value)} pp`;
 }
 
 function confidenceLabel(
