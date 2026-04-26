@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,10 +37,12 @@ limit {limit}
 def run_aws_json(args: list[str]) -> dict:
     completed = subprocess.run(
         ["aws", *args, "--output", "json"],
-        check=True,
         capture_output=True,
         text=True,
     )
+    if completed.returncode != 0:
+        print(completed.stderr, file=sys.stderr)
+        completed.check_returncode()
     return json.loads(completed.stdout)
 
 
