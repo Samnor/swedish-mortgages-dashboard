@@ -2,15 +2,22 @@ import React, { useEffect, useReducer } from "react";
 import { createRoot } from "react-dom/client";
 import ReactECharts from "echarts-for-react";
 import {
+  deriveDashboardKpis,
   maxOutgoingTransitions,
   parseDashboardSnapshot,
   stateComplexity,
   transition,
+  type DashboardKpis,
   type DashboardSnapshot,
 } from "./dashboardMachine";
 import "./styles.css";
 
 const snapshotUrl = `${import.meta.env.BASE_URL}data/latest.json`;
+
+const rateFormatter = new Intl.NumberFormat("en-SE", {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
 
 function RatesPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   const chartOption = {
@@ -42,6 +49,46 @@ function RatesPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   };
 
   return <ReactECharts option={chartOption} className="chart" />;
+}
+
+function KpiGrid({ kpis }: { kpis: DashboardKpis }) {
+  return (
+    <section className="kpi-grid" aria-label="Mortgage market summary">
+      <KpiCard
+        label="Policy rate"
+        value={`${rateFormatter.format(kpis.latestPolicyRate)}%`}
+        detail={`Latest source date ${kpis.latestDate}`}
+        delta={kpis.policyRateChange30d}
+      />
+      <KpiCard
+        label="5Y mortgage bond"
+        value={`${rateFormatter.format(kpis.latestMortgageBond5y)}%`}
+        detail="Covered bond funding proxy"
+        delta={kpis.mortgageBond5yChange30d}
+      />
+    </section>
+  );
+}
+
+function KpiCard({
+  label,
+  value,
+  detail,
+  delta,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  delta: number | null;
+}) {
+  return (
+    <article className="kpi-card">
+      <p className="eyebrow">{label}</p>
+      <strong>{value}</strong>
+      <span>{detail}</span>
+      <span className="delta">{formatDelta(delta)} vs 30d ago</span>
+    </article>
+  );
 }
 
 function App() {
@@ -82,6 +129,7 @@ function App() {
 
   const snapshot =
     state.value === "ready" || state.value === "stale" ? state.snapshot : null;
+  const kpis = snapshot ? deriveDashboardKpis(snapshot) : null;
 
   return (
     <main>
@@ -93,6 +141,8 @@ function App() {
           Superset remains the deeper internal analysis tool.
         </p>
       </section>
+
+      {kpis ? <KpiGrid kpis={kpis} /> : null}
 
       <section className="panel">
         <div>
@@ -124,6 +174,12 @@ function App() {
       </section>
     </main>
   );
+}
+
+function formatDelta(delta: number | null): string {
+  if (delta === null) return "n/a";
+  const prefix = delta > 0 ? "+" : "";
+  return `${prefix}${rateFormatter.format(delta)} pp`;
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

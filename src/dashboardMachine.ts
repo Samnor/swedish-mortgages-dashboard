@@ -9,6 +9,14 @@ export type DashboardSnapshot = {
   rates: RatePoint[];
 };
 
+export type DashboardKpis = {
+  latestDate: string;
+  latestPolicyRate: number;
+  latestMortgageBond5y: number;
+  policyRateChange30d: number | null;
+  mortgageBond5yChange30d: number | null;
+};
+
 export type DashboardState =
   | { value: "idle" }
   | { value: "loading" }
@@ -74,6 +82,26 @@ export function parseDashboardSnapshot(input: unknown): DashboardSnapshot {
   return {
     generatedAt,
     rates: input.rates.map(parseRatePoint),
+  };
+}
+
+export function deriveDashboardKpis(
+  snapshot: DashboardSnapshot,
+): DashboardKpis | null {
+  const latest = snapshot.rates.at(-1);
+  if (!latest) return null;
+
+  const comparison = comparisonRate(snapshot.rates, latest.date, 30);
+  return {
+    latestDate: latest.date,
+    latestPolicyRate: latest.policyRate,
+    latestMortgageBond5y: latest.mortgageBond5y,
+    policyRateChange30d: comparison
+      ? roundRateDelta(latest.policyRate - comparison.policyRate)
+      : null,
+    mortgageBond5yChange30d: comparison
+      ? roundRateDelta(latest.mortgageBond5y - comparison.mortgageBond5y)
+      : null,
   };
 }
 
@@ -159,6 +187,22 @@ function readNumber(
 
 function isRecord(input: unknown): input is Record<string, unknown> {
   return typeof input === "object" && input !== null && !Array.isArray(input);
+}
+
+function comparisonRate(
+  rates: RatePoint[],
+  latestDate: string,
+  daysBack: number,
+): RatePoint | null {
+  const targetTime = Date.parse(latestDate) - daysBack * 24 * 60 * 60 * 1000;
+  if (Number.isNaN(targetTime)) return null;
+
+  const candidates = rates.filter((rate) => Date.parse(rate.date) <= targetTime);
+  return candidates.at(-1) ?? null;
+}
+
+function roundRateDelta(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 export function snapshotStaleReason(snapshot: DashboardSnapshot): string | null {
