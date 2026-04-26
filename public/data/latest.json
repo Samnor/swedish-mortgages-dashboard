@@ -1,30 +1,35 @@
 {
-  "generatedAt": "2026-04-26T00:00:00Z",
+  "generatedAt": "2026-04-26T17:01:43.167128+00:00",
+  "environment": "prod",
+  "source": "swedish_mortgages_prod_marts.rates_daily",
+  "queryId": "3b6ce254-d523-4e97-ae18-23c39e4370f0",
+  "negotiationSource": "swedish_mortgages_prod_marts.bank_vs_market_analysis",
+  "negotiationQueryId": "ff277a3c-89ea-47c0-a6bd-4e81c8b7191b",
   "rates": [
     {
+      "date": "2026-04-17",
+      "policyRate": 1.75,
+      "mortgageBond5y": 2.8425
+    },
+    {
       "date": "2026-04-20",
-      "policyRate": 2.25,
-      "mortgageBond5y": 2.71
+      "policyRate": 1.75,
+      "mortgageBond5y": 2.8896
     },
     {
       "date": "2026-04-21",
-      "policyRate": 2.25,
-      "mortgageBond5y": 2.73
+      "policyRate": 1.75,
+      "mortgageBond5y": 2.9214
     },
     {
       "date": "2026-04-22",
-      "policyRate": 2.25,
-      "mortgageBond5y": 2.7
+      "policyRate": 1.75,
+      "mortgageBond5y": 2.9292
     },
     {
       "date": "2026-04-23",
-      "policyRate": 2.25,
-      "mortgageBond5y": 2.69
-    },
-    {
-      "date": "2026-04-24",
-      "policyRate": 2.25,
-      "mortgageBond5y": 2.68
+      "policyRate": 1.75,
+      "mortgageBond5y": 2.9523
     }
   ],
   "negotiationOptions": [
@@ -33,7 +38,9 @@
       "periodLabelDisplay": "3M",
       "periodYears": 0.25,
       "minListRate": 3.2,
+      "lowerListRate": 3.2,
       "medianListRate": 3.94,
+      "upperListRate": 3.99,
       "maxListRate": 3.99,
       "minFundingCost": 2.1038,
       "medianFundingCost": 2.1038,
@@ -44,9 +51,11 @@
     {
       "periodLabel": "01Y",
       "periodLabelDisplay": "1Y",
-      "periodYears": 1,
+      "periodYears": 1.0,
       "minListRate": 3.58,
+      "lowerListRate": 3.58,
       "medianListRate": 3.62,
+      "upperListRate": 3.74,
       "maxListRate": 3.74,
       "minFundingCost": 2.1038,
       "medianFundingCost": 2.1038,
@@ -55,11 +64,28 @@
       "bankCount": 3
     },
     {
+      "periodLabel": "02Y",
+      "periodLabelDisplay": "2Y",
+      "periodYears": 2.0,
+      "minListRate": 3.69,
+      "lowerListRate": 3.69,
+      "medianListRate": 3.84,
+      "upperListRate": 3.89,
+      "maxListRate": 3.89,
+      "minFundingCost": 2.507,
+      "medianFundingCost": 2.507,
+      "lowerMargin": 0.3117,
+      "upperMargin": 0.3117,
+      "bankCount": 3
+    },
+    {
       "periodLabel": "03Y",
       "periodLabelDisplay": "3Y",
-      "periodYears": 3,
+      "periodYears": 3.0,
       "minListRate": 3.84,
+      "lowerListRate": 3.84,
       "medianListRate": 3.94,
+      "upperListRate": 3.99,
       "maxListRate": 3.99,
       "minFundingCost": 2.6555,
       "medianFundingCost": 2.6555,
@@ -68,17 +94,109 @@
       "bankCount": 3
     },
     {
+      "periodLabel": "04Y",
+      "periodLabelDisplay": "4Y",
+      "periodYears": 4.0,
+      "minListRate": 3.94,
+      "lowerListRate": 3.94,
+      "medianListRate": 3.99,
+      "upperListRate": 4.09,
+      "maxListRate": 4.09,
+      "minFundingCost": 2.8038,
+      "medianFundingCost": 2.8038,
+      "lowerMargin": 0.3132,
+      "upperMargin": 0.3132,
+      "bankCount": 3
+    },
+    {
       "periodLabel": "05Y",
       "periodLabelDisplay": "5Y",
-      "periodYears": 5,
+      "periodYears": 5.0,
       "minListRate": 4.09,
+      "lowerListRate": 4.09,
       "medianListRate": 4.09,
+      "upperListRate": 4.19,
       "maxListRate": 4.19,
       "minFundingCost": 2.9523,
       "medianFundingCost": 2.9523,
       "lowerMargin": 0.1647,
       "upperMargin": 0.1647,
       "bankCount": 3
+    },
+    {
+      "periodLabel": "06Y",
+      "periodLabelDisplay": "6Y",
+      "periodYears": 6.0,
+      "minListRate": 4.29,
+      "lowerListRate": 4.29,
+      "medianListRate": 4.29,
+      "upperListRate": 4.29,
+      "maxListRate": 4.29,
+      "minFundingCost": 2.9523,
+      "medianFundingCost": 2.9523,
+      "lowerMargin": 0.2674,
+      "upperMargin": 0.2674,
+      "bankCount": 1
+    },
+    {
+      "periodLabel": "07Y",
+      "periodLabelDisplay": "7Y",
+      "periodYears": 7.0,
+      "minListRate": 4.29,
+      "lowerListRate": 4.29,
+      "medianListRate": 4.38,
+      "upperListRate": 4.38,
+      "maxListRate": 4.38,
+      "minFundingCost": 2.9523,
+      "medianFundingCost": 2.9523,
+      "lowerMargin": 0.2674,
+      "upperMargin": 0.2674,
+      "bankCount": 2
+    },
+    {
+      "periodLabel": "08Y",
+      "periodLabelDisplay": "8Y",
+      "periodYears": 8.0,
+      "minListRate": 4.29,
+      "lowerListRate": 4.29,
+      "medianListRate": 4.29,
+      "upperListRate": 4.29,
+      "maxListRate": 4.29,
+      "minFundingCost": 2.9523,
+      "medianFundingCost": 2.9523,
+      "lowerMargin": 0.2674,
+      "upperMargin": 0.2674,
+      "bankCount": 2
+    },
+    {
+      "periodLabel": "09Y",
+      "periodLabelDisplay": "9Y",
+      "periodYears": 9.0,
+      "minListRate": 4.29,
+      "lowerListRate": 4.29,
+      "medianListRate": 4.29,
+      "upperListRate": 4.29,
+      "maxListRate": 4.29,
+      "minFundingCost": 2.9523,
+      "medianFundingCost": 2.9523,
+      "lowerMargin": 0.2674,
+      "upperMargin": 0.2674,
+      "bankCount": 1
+    },
+    {
+      "periodLabel": "10Y",
+      "periodLabelDisplay": "10Y",
+      "periodYears": 10.0,
+      "minListRate": 4.29,
+      "lowerListRate": 4.29,
+      "medianListRate": 4.59,
+      "upperListRate": 4.59,
+      "maxListRate": 4.59,
+      "minFundingCost": 2.9523,
+      "medianFundingCost": 2.9523,
+      "lowerMargin": 0.2674,
+      "upperMargin": 0.2674,
+      "bankCount": 2
     }
   ]
 }

@@ -266,6 +266,20 @@ code {
   box-shadow: 0 24px 60px rgba(80, 63, 43, 0.12);
 }
 
+.diagnostics-panel {
+  margin-top: 18px;
+}
+
+.diagnostics-panel summary {
+  cursor: pointer;
+  color: #743a22;
+  font-family: "Courier New", monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .chart {
   min-height: 360px;
 }

@@ -29,43 +29,51 @@ snapshot.rates.forEach((row, index) => {
   previousDate = row.date;
 });
 
-if (snapshot.negotiationOptions !== undefined) {
-  if (!Array.isArray(snapshot.negotiationOptions)) {
-    throw new Error("Expected negotiationOptions to be an array when present.");
-  }
-
-  let previousYears = -Infinity;
-  snapshot.negotiationOptions.forEach((row, index) => {
-    assertRecord(row, `negotiationOptions[${index}]`);
-    assertString(row.periodLabel, `negotiationOptions[${index}].periodLabel`);
-    assertString(
-      row.periodLabelDisplay,
-      `negotiationOptions[${index}].periodLabelDisplay`,
-    );
-    assertFiniteNumber(row.periodYears, `negotiationOptions[${index}].periodYears`);
-    assertFiniteNumber(row.minListRate, `negotiationOptions[${index}].minListRate`);
-    assertFiniteNumber(
-      row.medianListRate,
-      `negotiationOptions[${index}].medianListRate`,
-    );
-    assertFiniteNumber(row.maxListRate, `negotiationOptions[${index}].maxListRate`);
-    assertFiniteNumber(
-      row.medianFundingCost,
-      `negotiationOptions[${index}].medianFundingCost`,
-    );
-    assertFiniteNumber(row.lowerMargin, `negotiationOptions[${index}].lowerMargin`);
-    assertFiniteNumber(row.upperMargin, `negotiationOptions[${index}].upperMargin`);
-    assertFiniteNumber(row.bankCount, `negotiationOptions[${index}].bankCount`);
-
-    if (row.periodYears < previousYears) {
-      throw new Error("Expected negotiationOptions to be sorted by periodYears.");
-    }
-    if (row.minListRate > row.maxListRate) {
-      throw new Error("Expected minListRate to be less than or equal to maxListRate.");
-    }
-    previousYears = row.periodYears;
-  });
+if (!Array.isArray(snapshot.negotiationOptions) || snapshot.negotiationOptions.length === 0) {
+  throw new Error("Expected negotiationOptions to be a non-empty array.");
 }
+
+let previousYears = -Infinity;
+snapshot.negotiationOptions.forEach((row, index) => {
+  assertRecord(row, `negotiationOptions[${index}]`);
+  assertString(row.periodLabel, `negotiationOptions[${index}].periodLabel`);
+  assertString(
+    row.periodLabelDisplay,
+    `negotiationOptions[${index}].periodLabelDisplay`,
+  );
+  assertFiniteNumber(row.periodYears, `negotiationOptions[${index}].periodYears`);
+  assertFiniteNumber(row.minListRate, `negotiationOptions[${index}].minListRate`);
+  assertFiniteNumber(row.lowerListRate, `negotiationOptions[${index}].lowerListRate`);
+  assertFiniteNumber(
+    row.medianListRate,
+    `negotiationOptions[${index}].medianListRate`,
+  );
+  assertFiniteNumber(row.upperListRate, `negotiationOptions[${index}].upperListRate`);
+  assertFiniteNumber(row.maxListRate, `negotiationOptions[${index}].maxListRate`);
+  assertFiniteNumber(
+    row.medianFundingCost,
+    `negotiationOptions[${index}].medianFundingCost`,
+  );
+  assertFiniteNumber(row.lowerMargin, `negotiationOptions[${index}].lowerMargin`);
+  assertFiniteNumber(row.upperMargin, `negotiationOptions[${index}].upperMargin`);
+  assertFiniteNumber(row.bankCount, `negotiationOptions[${index}].bankCount`);
+
+  if (row.periodYears < previousYears) {
+    throw new Error("Expected negotiationOptions to be sorted by periodYears.");
+  }
+  if (
+    row.minListRate > row.lowerListRate ||
+    row.lowerListRate > row.medianListRate ||
+    row.medianListRate > row.upperListRate ||
+    row.upperListRate > row.maxListRate
+  ) {
+    throw new Error("Expected list-rate quantiles to be ordered.");
+  }
+  if (row.medianFundingCost > row.maxListRate) {
+    throw new Error("Expected medianFundingCost not to exceed maxListRate.");
+  }
+  previousYears = row.periodYears;
+});
 
 function assertRecord(value, label) {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {

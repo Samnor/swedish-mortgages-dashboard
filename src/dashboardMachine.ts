@@ -9,7 +9,9 @@ export type NegotiationOption = {
   periodLabelDisplay: string;
   periodYears: number;
   minListRate: number;
+  lowerListRate: number;
   medianListRate: number;
+  upperListRate: number;
   maxListRate: number;
   minFundingCost: number;
   medianFundingCost: number;
@@ -102,13 +104,13 @@ export function parseDashboardSnapshot(input: unknown): DashboardSnapshot {
     throw new Error("Dashboard snapshot is missing rates.");
   }
 
-  return {
+  const snapshot = {
     generatedAt,
     rates: input.rates.map(parseRatePoint),
-    negotiationOptions: Array.isArray(input.negotiationOptions)
-      ? input.negotiationOptions.map(parseNegotiationOption)
-      : [],
+    negotiationOptions: readNegotiationOptions(input),
   };
+  validateDashboardSnapshot(snapshot);
+  return snapshot;
 }
 
 export function deriveDashboardKpis(
@@ -134,8 +136,10 @@ export function deriveDashboardKpis(
 export function deriveNegotiationRange(
   option: NegotiationOption,
 ): NegotiationRange {
-  const floorRate = roundRateDelta(option.medianFundingCost + option.lowerMargin);
-  const ceilingRate = roundRateDelta(option.medianFundingCost + option.upperMargin);
+  const floorRate = roundRateDelta(
+    Math.max(option.medianFundingCost, option.lowerListRate),
+  );
+  const ceilingRate = roundRateDelta(Math.max(floorRate, option.upperListRate));
   const midpointRate = roundRateDelta((floorRate + ceilingRate) / 2);
 
   return {
@@ -219,7 +223,21 @@ function parseNegotiationOption(input: unknown): NegotiationOption {
     periodLabelDisplay: readString(input, "periodLabelDisplay"),
     periodYears: readNumber(input, "periodYears", "period_years"),
     minListRate: readNumber(input, "minListRate", "min_list_rate"),
+    lowerListRate: readOptionalNumber(
+      input,
+      "lowerListRate",
+      "lower_list_rate",
+      "minListRate",
+      "min_list_rate",
+    ),
     medianListRate: readNumber(input, "medianListRate", "median_list_rate"),
+    upperListRate: readOptionalNumber(
+      input,
+      "upperListRate",
+      "upper_list_rate",
+      "maxListRate",
+      "max_list_rate",
+    ),
     maxListRate: readNumber(input, "maxListRate", "max_list_rate"),
     minFundingCost: readNumber(input, "minFundingCost", "min_funding_cost"),
     medianFundingCost: readNumber(
@@ -231,6 +249,13 @@ function parseNegotiationOption(input: unknown): NegotiationOption {
     upperMargin: readNumber(input, "upperMargin", "upper_margin"),
     bankCount: readNumber(input, "bankCount", "bank_count"),
   };
+}
+
+function readNegotiationOptions(input: Record<string, unknown>): NegotiationOption[] {
+  if (!Array.isArray(input.negotiationOptions)) {
+    throw new Error("Dashboard snapshot is missing negotiationOptions.");
+  }
+  return input.negotiationOptions.map(parseNegotiationOption);
 }
 
 function readString(input: Record<string, unknown>, key: string): string {
@@ -253,8 +278,66 @@ function readNumber(
   return value;
 }
 
+function readOptionalNumber(
+  input: Record<string, unknown>,
+  primaryKey: string,
+  fallbackKey: string,
+  legacyPrimaryKey: string,
+  legacyFallbackKey: string,
+): number {
+  const value =
+    input[primaryKey] ??
+    input[fallbackKey] ??
+    input[legacyPrimaryKey] ??
+    input[legacyFallbackKey];
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    throw new Error(`Expected ${primaryKey} to be a number.`);
+  }
+  return value;
+}
+
 function isRecord(input: unknown): input is Record<string, unknown> {
   return typeof input === "object" && input !== null && !Array.isArray(input);
+}
+
+function validateDashboardSnapshot(snapshot: DashboardSnapshot): void {
+  if (snapshot.rates.length === 0) return;
+  assertAscending(
+    snapshot.rates.map((rate) => rate.date),
+    "rates must be sorted ascending by date.",
+  );
+  if (snapshot.negotiationOptions.length === 0) {
+    throw new Error("Dashboard snapshot has no negotiationOptions.");
+  }
+
+  let previousYears = -Infinity;
+  for (const option of snapshot.negotiationOptions) {
+    if (option.periodYears < previousYears) {
+      throw new Error("negotiationOptions must be sorted by periodYears.");
+    }
+    previousYears = option.periodYears;
+
+    if (
+      option.minListRate > option.lowerListRate ||
+      option.lowerListRate > option.medianListRate ||
+      option.medianListRate > option.upperListRate ||
+      option.upperListRate > option.maxListRate
+    ) {
+      throw new Error("Negotiation list-rate quantiles are inconsistent.");
+    }
+
+    if (option.medianFundingCost > option.maxListRate) {
+      throw new Error("Funding proxy is above the maximum listed rate.");
+    }
+  }
+}
+
+function assertAscending(values: string[], message: string): void {
+  let previous = "";
+  for (const value of values) {
+    if (previous && value < previous) throw new Error(message);
+    previous = value;
+  }
 }
 
 function comparisonRate(

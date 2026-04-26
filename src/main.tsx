@@ -202,7 +202,8 @@ function NegotiationRangePanel({ range }: { range: NegotiationRange }) {
         Use around <strong>{formatRate(range.midpointRate)}</strong> as a
         starting target. That is roughly{" "}
         <strong>{formatDelta(range.discountFromMedianListRate)}</strong> below
-        the median listed rate in this duration bucket.
+        the median listed rate in this duration bucket. The range is based on
+        the lower-to-upper listed-rate quartiles, not a guaranteed offer.
       </p>
       <dl className="range-details">
         <div>
@@ -319,26 +320,27 @@ function App() {
         />
       ) : null}
 
-      <section className="panel">
+      <section className="panel diagnostics-panel">
         <div>
-          <p className="eyebrow">Preview</p>
-          <h2>Rate environment</h2>
-          <p>
-            State: <strong>{state.value}</strong>. The dashboard reads a public
-            JSON snapshot from <code>{snapshotUrl}</code>.
-          </p>
-          <p>
-            State machine complexity: max {maxOutgoingTransitions} outgoing
-            transitions per state.
-          </p>
-          <dl className="complexity-list">
-            {Object.entries(stateComplexity).map(([name, count]) => (
-              <div key={name}>
-                <dt>{name}</dt>
-                <dd>{count}</dd>
-              </div>
-            ))}
-          </dl>
+          <details>
+            <summary>Data and app diagnostics</summary>
+            <p>
+              State: <strong>{state.value}</strong>. The dashboard reads a public
+              JSON snapshot from <code>{snapshotUrl}</code>.
+            </p>
+            <p>
+              State machine complexity: max {maxOutgoingTransitions} outgoing
+              transitions per state.
+            </p>
+            <dl className="complexity-list">
+              {Object.entries(stateComplexity).map(([name, count]) => (
+                <div key={name}>
+                  <dt>{name}</dt>
+                  <dd>{count}</dd>
+                </div>
+              ))}
+            </dl>
+          </details>
           {state.value === "stale" ? <p>{state.reason}</p> : null}
           {state.value === "error" ? <p>{state.message}</p> : null}
           {state.value === "empty" ? (
@@ -474,10 +476,10 @@ function fundingMarginOption(range: NegotiationRange) {
         type: "bar",
         stack: "rate",
         data: [
-          marginLow,
-          range.midpointRate - range.option.medianFundingCost,
-          marginHigh,
-          range.option.medianListRate - range.option.medianFundingCost,
+          Math.max(0, marginLow),
+          Math.max(0, range.midpointRate - range.option.medianFundingCost),
+          Math.max(0, marginHigh),
+          Math.max(0, range.option.medianListRate - range.option.medianFundingCost),
         ],
       },
     ],
