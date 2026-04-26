@@ -102,6 +102,7 @@ type AppCopy = {
     handoffLabel: string;
     metrics: Array<{ label: string; value: string }>;
     controls: string[];
+    githubLinks: Array<{ label: string; url: string }>;
     steps: Array<{ title: string; body: string }>;
   };
   fundingIntro: {
@@ -223,6 +224,16 @@ const copy = {
         "Källänkar måste följa med publika datapunkter.",
         "Tidsserier måste vara sorterade innan appen bygger diagram.",
         "Kvartiler och marginaler valideras innan snapshoten laddas upp.",
+      ],
+      githubLinks: [
+        {
+          label: "dbt-repo",
+          url: "https://github.com/Samnor/swedish-mortgages-dbt",
+        },
+        {
+          label: "dashboard-app",
+          url: "https://github.com/Samnor/swedish-mortgages-dashboard",
+        },
       ],
       steps: [
         {
@@ -381,6 +392,16 @@ const copy = {
         "Source links must travel with public data points.",
         "Time series must be sorted before the app renders charts.",
         "Quantiles and margins are validated before the snapshot is uploaded.",
+      ],
+      githubLinks: [
+        {
+          label: "dbt repo",
+          url: "https://github.com/Samnor/swedish-mortgages-dbt",
+        },
+        {
+          label: "dashboard app",
+          url: "https://github.com/Samnor/swedish-mortgages-dashboard",
+        },
       ],
       steps: [
         {
@@ -854,6 +875,14 @@ function renderPipelineScreen(
         <ul>
           ${labels.controls.map((control) => `<li>${escapeHtml(control)}</li>`).join("")}
         </ul>
+        <div class="pipeline-github-links">
+          ${labels.githubLinks
+            .map(
+              (link) =>
+                `<a href="${escapeAttr(link.url)}" rel="noreferrer" target="_blank">${escapeHtml(link.label)}</a>`,
+            )
+            .join("")}
+        </div>
       </section>
     </main>
   `;
@@ -921,11 +950,13 @@ function renderRatesPanel(labels: AppCopy["rates"], snapshot: DashboardSnapshot)
     series: [
       {
         label: labels.policyRate,
+        valueLabel: formatRate(lastValue(snapshot.rates.map((row) => row.policyRate))),
         values: snapshot.rates.map((row) => row.policyRate),
         color: "#743a22",
       },
       {
         label: labels.mortgageBond5y,
+        valueLabel: formatRate(lastValue(snapshot.rates.map((row) => row.mortgageBond5y))),
         values: snapshot.rates.map((row) => row.mortgageBond5y),
         color: "#2d5f5d",
       },
@@ -945,17 +976,20 @@ function renderMarketPressureChart(
     series: [
       {
         label: labels.policyRate,
+        valueLabel: formatRate(lastValue(snapshot.rates.map((row) => row.policyRate))),
         values: snapshot.rates.map((row) => row.policyRate),
         color: "#743a22",
       },
       {
         label: labels.coveredBondProxy,
+        valueLabel: formatRate(lastValue(snapshot.rates.map((row) => row.mortgageBond5y))),
         values: snapshot.rates.map((row) => row.mortgageBond5y),
         color: "#2d5f5d",
       },
       {
         dashed: true,
         label: `${range.option.periodLabelDisplay} ${labels.target}`,
+        valueLabel: formatRate(range.midpointRate),
         values: snapshot.rates.map(() => range.midpointRate),
         color: "#d08a24",
       },
@@ -973,11 +1007,13 @@ function renderDurationComparisonChart(
     ariaLabel: labels.durationComparison,
     bars: {
       label: labels.medianListed,
+      valueLabel: formatRate(range.option.medianListRate),
       values: options.map((option) => option.medianListRate),
       color: "#d7c3a2",
     },
     line: {
       label: labels.negotiationTarget,
+      valueLabel: formatRate(range.midpointRate),
       values: options.map((option) => deriveNegotiationRange(option).midpointRate),
       color: "#743a22",
     },
@@ -1004,11 +1040,13 @@ function renderFundingMarginChart(
     ariaLabel: labels.fundingMargin,
     base: {
       label: labels.fundingProxy,
+      valueLabel: formatRate(fundingCost),
       values: totalValues.map(() => fundingCost),
       color: "#2d5f5d",
     },
     stack: {
       label: labels.marginRoom,
+      valueLabel: formatRate(Math.max(0, range.midpointRate - fundingCost)),
       values: totalValues.map((value) => Math.max(0, value - fundingCost)),
       color: "#d08a24",
     },
@@ -1070,7 +1108,13 @@ function lineChart({
 }: {
   ariaLabel: string;
   className: string;
-  series: Array<{ color: string; dashed?: boolean; label: string; values: number[] }>;
+  series: Array<{
+    color: string;
+    dashed?: boolean;
+    label: string;
+    valueLabel: string;
+    values: number[];
+  }>;
   xLabels: string[];
 }): string {
   const geometry = chartGeometry(series.flatMap((item) => item.values));
@@ -1107,8 +1151,8 @@ function barLineChart({
   xLabels,
 }: {
   ariaLabel: string;
-  bars: { color: string; label: string; values: number[] };
-  line: { color: string; label: string; values: number[] };
+  bars: { color: string; label: string; valueLabel: string; values: number[] };
+  line: { color: string; label: string; valueLabel: string; values: number[] };
   selectedIndex: number;
   selectedLabel: string;
   xLabels: string[];
@@ -1135,9 +1179,9 @@ function barLineChart({
         ${xAxisLabels(geometry, xLabels)}
       </svg>
       ${chartLegend([
-        { color: bars.color, label: bars.label },
-        { color: line.color, label: line.label },
-        { color: "#17211f", label: selectedLabel },
+        { color: bars.color, label: bars.label, valueLabel: bars.valueLabel },
+        { color: line.color, label: line.label, valueLabel: line.valueLabel },
+        { color: "#17211f", label: selectedLabel, valueLabel: "" },
       ])}
     </figure>
   `;
@@ -1150,8 +1194,8 @@ function stackedBarChart({
   xLabels,
 }: {
   ariaLabel: string;
-  base: { color: string; label: string; values: number[] };
-  stack: { color: string; label: string; values: number[] };
+  base: { color: string; label: string; valueLabel: string; values: number[] };
+  stack: { color: string; label: string; valueLabel: string; values: number[] };
   xLabels: string[];
 }): string {
   const totals = base.values.map((value, index) => value + stack.values[index]);
@@ -1177,8 +1221,8 @@ function stackedBarChart({
         ${xAxisLabels(geometry, xLabels)}
       </svg>
       ${chartLegend([
-        { color: base.color, label: base.label },
-        { color: stack.color, label: stack.label },
+        { color: base.color, label: base.label, valueLabel: base.valueLabel },
+        { color: stack.color, label: stack.label, valueLabel: stack.valueLabel },
       ])}
     </figure>
   `;
@@ -1223,13 +1267,19 @@ function xAxisLabels(geometry: ChartGeometry, labels: string[]): string {
   `;
 }
 
-function chartLegend(series: Array<{ color: string; label: string }>): string {
+function chartLegend(
+  series: Array<{ color: string; label: string; valueLabel?: string }>,
+): string {
   return `
     <figcaption class="chart-legend">
       ${series
         .map(
           (item) => `
-            <span><i style="background: ${escapeAttr(item.color)}"></i>${escapeHtml(item.label)}</span>
+            <span>
+              <i style="background: ${escapeAttr(item.color)}"></i>
+              <b>${escapeHtml(item.label)}</b>
+              ${item.valueLabel ? `<em>${escapeHtml(item.valueLabel)}</em>` : ""}
+            </span>
           `,
         )
         .join("")}
@@ -1254,6 +1304,10 @@ function xForIndex(index: number, count: number, geometry: ChartGeometry): numbe
 function yForValue(value: number, geometry: ChartGeometry): number {
   const range = geometry.max - geometry.min || 1;
   return geometry.bottom - ((value - geometry.min) / range) * geometry.plotHeight;
+}
+
+function lastValue(values: number[]): number {
+  return values.at(-1) ?? 0;
 }
 
 function numberFormatter() {
