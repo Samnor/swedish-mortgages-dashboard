@@ -1,14 +1,17 @@
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import { createRoot } from "react-dom/client";
 import ReactECharts from "echarts-for-react";
 import {
   deriveDashboardKpis,
+  deriveNegotiationRange,
   maxOutgoingTransitions,
   parseDashboardSnapshot,
   stateComplexity,
   transition,
   type DashboardKpis,
   type DashboardSnapshot,
+  type NegotiationOption,
+  type NegotiationRange,
 } from "./dashboardMachine";
 import "./styles.css";
 
@@ -70,6 +73,95 @@ function KpiGrid({ kpis }: { kpis: DashboardKpis }) {
   );
 }
 
+function DurationFlow({
+  options,
+  selectedPeriod,
+  onSelectPeriod,
+}: {
+  options: NegotiationOption[];
+  selectedPeriod: string | null;
+  onSelectPeriod: (period: string) => void;
+}) {
+  const selectedOption =
+    options.find((option) => option.periodLabel === selectedPeriod) ??
+    options[0] ??
+    null;
+  const range = selectedOption ? deriveNegotiationRange(selectedOption) : null;
+
+  if (!range) {
+    return (
+      <section className="flow-panel">
+        <p className="eyebrow">Mortgage flow</p>
+        <h2>No negotiation data yet.</h2>
+        <p>
+          The app has rate history, but no duration-specific bank comparison
+          rows in this snapshot.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="flow-panel">
+      <div>
+        <p className="eyebrow">Step 1</p>
+        <h2>How long do you want to bind your mortgage?</h2>
+        <p>
+          Pick the duration you are considering. The range below estimates a
+          realistic negotiation target from listed bank rates and market funding
+          proxies.
+        </p>
+        <div className="duration-options" role="list">
+          {options.map((option) => (
+            <button
+              aria-pressed={option.periodLabel === range.option.periodLabel}
+              className="duration-button"
+              key={option.periodLabel}
+              onClick={() => onSelectPeriod(option.periodLabel)}
+              type="button"
+            >
+              {option.periodLabelDisplay}
+            </button>
+          ))}
+        </div>
+      </div>
+      <NegotiationRangePanel range={range} />
+    </section>
+  );
+}
+
+function NegotiationRangePanel({ range }: { range: NegotiationRange }) {
+  return (
+    <article className="range-card">
+      <p className="eyebrow">Step 2</p>
+      <h2>{range.option.periodLabelDisplay} negotiation range</h2>
+      <div className="range-value">
+        {formatRate(range.floorRate)}-{formatRate(range.ceilingRate)}
+      </div>
+      <p>
+        Use around <strong>{formatRate(range.midpointRate)}</strong> as a
+        starting target. That is roughly{" "}
+        <strong>{formatDelta(range.discountFromMedianListRate)}</strong> below
+        the median listed rate in this duration bucket.
+      </p>
+      <dl className="range-details">
+        <div>
+          <dt>Median listed</dt>
+          <dd>{formatRate(range.option.medianListRate)}</dd>
+        </div>
+        <div>
+          <dt>Funding proxy</dt>
+          <dd>{formatRate(range.option.medianFundingCost)}</dd>
+        </div>
+        <div>
+          <dt>Banks sampled</dt>
+          <dd>{range.option.bankCount}</dd>
+        </div>
+      </dl>
+    </article>
+  );
+}
+
 function KpiCard({
   label,
   value,
@@ -93,6 +185,7 @@ function KpiCard({
 
 function App() {
   const [state, dispatch] = useReducer(transition, { value: "idle" });
+  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -130,6 +223,7 @@ function App() {
   const snapshot =
     state.value === "ready" || state.value === "stale" ? state.snapshot : null;
   const kpis = snapshot ? deriveDashboardKpis(snapshot) : null;
+  const negotiationOptions = snapshot?.negotiationOptions ?? [];
 
   return (
     <main>
@@ -137,12 +231,18 @@ function App() {
         <p className="eyebrow">Swedish Mortgage Intelligence</p>
         <h1>Market context before you negotiate with a lender.</h1>
         <p>
-          A lightweight public dashboard built from curated dbt/Athena outputs.
-          Superset remains the deeper internal analysis tool.
+          Pick the binding period you are considering and get a market-informed
+          range to use before talking to a lender.
         </p>
       </section>
 
-      {kpis ? <KpiGrid kpis={kpis} /> : null}
+      {snapshot ? (
+        <DurationFlow
+          onSelectPeriod={setSelectedPeriod}
+          options={negotiationOptions}
+          selectedPeriod={selectedPeriod}
+        />
+      ) : null}
 
       <section className="panel">
         <div>
@@ -172,8 +272,14 @@ function App() {
         </div>
         {snapshot ? <RatesPanel snapshot={snapshot} /> : <div className="chart" />}
       </section>
+
+      {kpis ? <KpiGrid kpis={kpis} /> : null}
     </main>
   );
+}
+
+function formatRate(value: number): string {
+  return `${rateFormatter.format(value)}%`;
 }
 
 function formatDelta(delta: number | null): string {

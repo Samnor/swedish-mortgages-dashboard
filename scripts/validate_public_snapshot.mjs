@@ -9,6 +9,8 @@ assertIsoDate(snapshot.generatedAt, "generatedAt");
 assertOptionalString(snapshot.environment, "environment");
 assertOptionalString(snapshot.source, "source");
 assertOptionalString(snapshot.queryId, "queryId");
+assertOptionalString(snapshot.negotiationSource, "negotiationSource");
+assertOptionalString(snapshot.negotiationQueryId, "negotiationQueryId");
 
 if (!Array.isArray(snapshot.rates)) {
   throw new Error("Expected rates to be an array.");
@@ -27,6 +29,44 @@ snapshot.rates.forEach((row, index) => {
   previousDate = row.date;
 });
 
+if (snapshot.negotiationOptions !== undefined) {
+  if (!Array.isArray(snapshot.negotiationOptions)) {
+    throw new Error("Expected negotiationOptions to be an array when present.");
+  }
+
+  let previousYears = -Infinity;
+  snapshot.negotiationOptions.forEach((row, index) => {
+    assertRecord(row, `negotiationOptions[${index}]`);
+    assertString(row.periodLabel, `negotiationOptions[${index}].periodLabel`);
+    assertString(
+      row.periodLabelDisplay,
+      `negotiationOptions[${index}].periodLabelDisplay`,
+    );
+    assertFiniteNumber(row.periodYears, `negotiationOptions[${index}].periodYears`);
+    assertFiniteNumber(row.minListRate, `negotiationOptions[${index}].minListRate`);
+    assertFiniteNumber(
+      row.medianListRate,
+      `negotiationOptions[${index}].medianListRate`,
+    );
+    assertFiniteNumber(row.maxListRate, `negotiationOptions[${index}].maxListRate`);
+    assertFiniteNumber(
+      row.medianFundingCost,
+      `negotiationOptions[${index}].medianFundingCost`,
+    );
+    assertFiniteNumber(row.lowerMargin, `negotiationOptions[${index}].lowerMargin`);
+    assertFiniteNumber(row.upperMargin, `negotiationOptions[${index}].upperMargin`);
+    assertFiniteNumber(row.bankCount, `negotiationOptions[${index}].bankCount`);
+
+    if (row.periodYears < previousYears) {
+      throw new Error("Expected negotiationOptions to be sorted by periodYears.");
+    }
+    if (row.minListRate > row.maxListRate) {
+      throw new Error("Expected minListRate to be less than or equal to maxListRate.");
+    }
+    previousYears = row.periodYears;
+  });
+}
+
 function assertRecord(value, label) {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     throw new Error(`Expected ${label} to be an object.`);
@@ -42,6 +82,12 @@ function assertIsoDate(value, label) {
 function assertDateOnly(value, label) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new Error(`Expected ${label} to be YYYY-MM-DD.`);
+  }
+}
+
+function assertString(value, label) {
+  if (typeof value !== "string") {
+    throw new Error(`Expected ${label} to be a string.`);
   }
 }
 

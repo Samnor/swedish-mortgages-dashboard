@@ -34,6 +34,28 @@ limit {limit}
 """.strip()
 
 
+def negotiation_query(database: str) -> str:
+    return f"""
+select
+  period_label,
+  period_label_display,
+  period_years,
+  min(list_rate) as min_list_rate,
+  approx_percentile(list_rate, 0.5) as median_list_rate,
+  max(list_rate) as max_list_rate,
+  min(funding_cost) as min_funding_cost,
+  approx_percentile(funding_cost, 0.5) as median_funding_cost,
+  approx_percentile(effective_margin_new, 0.25) as lower_margin,
+  approx_percentile(effective_margin_new, 0.75) as upper_margin,
+  count(*) as bank_count
+from {database}.bank_vs_market_analysis
+where list_rate is not null
+  and funding_cost is not null
+group by period_label, period_label_display, period_years
+order by period_years
+""".strip()
+
+
 def run_aws_json(args: list[str]) -> dict:
     completed = subprocess.run(
         ["aws", *args, "--output", "json"],
@@ -114,6 +136,25 @@ def parse_rate_rows(rows: list[dict[str, str]]) -> list[dict[str, float | str]]:
     return list(reversed(rates))
 
 
+def parse_negotiation_rows(rows: list[dict[str, str]]) -> list[dict[str, float | int | str]]:
+    return [
+        {
+            "periodLabel": row["period_label"],
+            "periodLabelDisplay": row["period_label_display"],
+            "periodYears": float(row["period_years"]),
+            "minListRate": float(row["min_list_rate"]),
+            "medianListRate": float(row["median_list_rate"]),
+            "maxListRate": float(row["max_list_rate"]),
+            "minFundingCost": float(row["min_funding_cost"]),
+            "medianFundingCost": float(row["median_funding_cost"]),
+            "lowerMargin": float(row["lower_margin"]),
+            "upperMargin": float(row["upper_margin"]),
+            "bankCount": int(row["bank_count"]),
+        }
+        for row in rows
+    ]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--environment", choices=["dev", "prod"], required=True)
@@ -134,6 +175,13 @@ def main() -> None:
         query=rates_query(database, args.limit),
     )
     rows = athena_rows(query_id)
+    negotiation_query_id = run_athena_query(
+        database=database,
+        output_location=args.athena_output,
+        workgroup=args.workgroup,
+        query=negotiation_query(database),
+    )
+    negotiation_rows = athena_rows(negotiation_query_id)
 
     args.output.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -141,7 +189,10 @@ def main() -> None:
         "environment": args.environment,
         "source": f"{database}.rates_daily",
         "queryId": query_id,
+        "negotiationSource": f"{database}.bank_vs_market_analysis",
+        "negotiationQueryId": negotiation_query_id,
         "rates": parse_rate_rows(rows),
+        "negotiationOptions": parse_negotiation_rows(negotiation_rows),
     }
     (args.output / "latest.json").write_text(json.dumps(payload, indent=2) + "\n")
 

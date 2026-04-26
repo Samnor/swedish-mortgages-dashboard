@@ -26,5 +26,59 @@
       "policyRate": 2.25,
       "mortgageBond5y": 2.68
     }
+  ],
+  "negotiationOptions": [
+    {
+      "periodLabel": "0.25Y",
+      "periodLabelDisplay": "3M",
+      "periodYears": 0.25,
+      "minListRate": 3.2,
+      "medianListRate": 3.94,
+      "maxListRate": 3.99,
+      "minFundingCost": 2.1038,
+      "medianFundingCost": 2.1038,
+      "lowerMargin": 0.5392,
+      "upperMargin": 0.5392,
+      "bankCount": 3
+    },
+    {
+      "periodLabel": "01Y",
+      "periodLabelDisplay": "1Y",
+      "periodYears": 1,
+      "minListRate": 3.58,
+      "medianListRate": 3.62,
+      "maxListRate": 3.74,
+      "minFundingCost": 2.1038,
+      "medianFundingCost": 2.1038,
+      "lowerMargin": 0.5012,
+      "upperMargin": 0.5012,
+      "bankCount": 3
+    },
+    {
+      "periodLabel": "03Y",
+      "periodLabelDisplay": "3Y",
+      "periodYears": 3,
+      "minListRate": 3.84,
+      "medianListRate": 3.94,
+      "maxListRate": 3.99,
+      "minFundingCost": 2.6555,
+      "medianFundingCost": 2.6555,
+      "lowerMargin": 0.4615,
+      "upperMargin": 0.4615,
+      "bankCount": 3
+    },
+    {
+      "periodLabel": "05Y",
+      "periodLabelDisplay": "5Y",
+      "periodYears": 5,
+      "minListRate": 4.09,
+      "medianListRate": 4.09,
+      "maxListRate": 4.19,
+      "minFundingCost": 2.9523,
+      "medianFundingCost": 2.9523,
+      "lowerMargin": 0.1647,
+      "upperMargin": 0.1647,
+      "bankCount": 3
+    }
   ]
 }

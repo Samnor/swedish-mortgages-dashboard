@@ -4,9 +4,24 @@ export type RatePoint = {
   mortgageBond5y: number;
 };
 
+export type NegotiationOption = {
+  periodLabel: string;
+  periodLabelDisplay: string;
+  periodYears: number;
+  minListRate: number;
+  medianListRate: number;
+  maxListRate: number;
+  minFundingCost: number;
+  medianFundingCost: number;
+  lowerMargin: number;
+  upperMargin: number;
+  bankCount: number;
+};
+
 export type DashboardSnapshot = {
   generatedAt: string;
   rates: RatePoint[];
+  negotiationOptions: NegotiationOption[];
 };
 
 export type DashboardKpis = {
@@ -15,6 +30,14 @@ export type DashboardKpis = {
   latestMortgageBond5y: number;
   policyRateChange30d: number | null;
   mortgageBond5yChange30d: number | null;
+};
+
+export type NegotiationRange = {
+  option: NegotiationOption;
+  floorRate: number;
+  midpointRate: number;
+  ceilingRate: number;
+  discountFromMedianListRate: number;
 };
 
 export type DashboardState =
@@ -82,6 +105,9 @@ export function parseDashboardSnapshot(input: unknown): DashboardSnapshot {
   return {
     generatedAt,
     rates: input.rates.map(parseRatePoint),
+    negotiationOptions: Array.isArray(input.negotiationOptions)
+      ? input.negotiationOptions.map(parseNegotiationOption)
+      : [],
   };
 }
 
@@ -102,6 +128,24 @@ export function deriveDashboardKpis(
     mortgageBond5yChange30d: comparison
       ? roundRateDelta(latest.mortgageBond5y - comparison.mortgageBond5y)
       : null,
+  };
+}
+
+export function deriveNegotiationRange(
+  option: NegotiationOption,
+): NegotiationRange {
+  const floorRate = roundRateDelta(option.medianFundingCost + option.lowerMargin);
+  const ceilingRate = roundRateDelta(option.medianFundingCost + option.upperMargin);
+  const midpointRate = roundRateDelta((floorRate + ceilingRate) / 2);
+
+  return {
+    option,
+    floorRate,
+    midpointRate,
+    ceilingRate,
+    discountFromMedianListRate: roundRateDelta(
+      option.medianListRate - midpointRate,
+    ),
   };
 }
 
@@ -163,6 +207,30 @@ function parseRatePoint(input: unknown): RatePoint {
   );
 
   return { date, policyRate, mortgageBond5y };
+}
+
+function parseNegotiationOption(input: unknown): NegotiationOption {
+  if (!isRecord(input)) {
+    throw new Error("Negotiation option must be an object.");
+  }
+
+  return {
+    periodLabel: readString(input, "periodLabel"),
+    periodLabelDisplay: readString(input, "periodLabelDisplay"),
+    periodYears: readNumber(input, "periodYears", "period_years"),
+    minListRate: readNumber(input, "minListRate", "min_list_rate"),
+    medianListRate: readNumber(input, "medianListRate", "median_list_rate"),
+    maxListRate: readNumber(input, "maxListRate", "max_list_rate"),
+    minFundingCost: readNumber(input, "minFundingCost", "min_funding_cost"),
+    medianFundingCost: readNumber(
+      input,
+      "medianFundingCost",
+      "median_funding_cost",
+    ),
+    lowerMargin: readNumber(input, "lowerMargin", "lower_margin"),
+    upperMargin: readNumber(input, "upperMargin", "upper_margin"),
+    bankCount: readNumber(input, "bankCount", "bank_count"),
+  };
 }
 
 function readString(input: Record<string, unknown>, key: string): string {

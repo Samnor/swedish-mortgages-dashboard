@@ -25,6 +25,10 @@ The state machine is the only place that decides whether a snapshot is usable,
 empty, stale, or failed. Components render states; they should not duplicate
 transition logic.
 
+The mortgage duration choice is intentionally not a top-level app state. It is
+view input derived against a loaded snapshot, so it can change freely without
+expanding the load/error/freshness state machine.
+
 ## Complexity Budget
 
 Local complexity is counted as outgoing transitions per state. This is cheap to
