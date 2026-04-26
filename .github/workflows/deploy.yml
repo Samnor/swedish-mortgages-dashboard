@@ -1,0 +1,109 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package*.json"
+      - "tsconfig.json"
+      - "vite.config.ts"
+      - "scripts/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - prod
+
+concurrency:
+  group: dashboard-${{ inputs.environment || (github.ref_name == 'main' && 'prod' || 'dev') }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+    steps:
+      - id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            DEPLOY_ENV="${{ inputs.environment }}"
+          elif [ "${{ github.ref_name }}" = "main" ]; then
+            DEPLOY_ENV="prod"
+          else
+            DEPLOY_ENV="dev"
+          fi
+          echo "environment=$DEPLOY_ENV" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: resolve
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve.outputs.environment }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-north-1' }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      STATIC_BUCKET: ${{ vars.STATIC_BUCKET }}
+      DATA_BUCKET: ${{ vars.DATA_BUCKET }}
+      DATA_PREFIX: ${{ vars.DATA_PREFIX || 'public-dashboard' }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up Node
+        uses: actions/setup-node@v6.2.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Check deployment configuration
+        id: preflight
+        run: |
+          missing=0
+          for name in AWS_ROLE_ARN STATIC_BUCKET; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing $name; deployment will be skipped."
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "deploy_ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy_ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials
+        if: steps.preflight.outputs.deploy_ready == 'true'
+        uses: aws-actions/configure-aws-credentials@v6.1.0
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload static assets
+        if: steps.preflight.outputs.deploy_ready == 'true'
+        run: aws s3 sync dist "s3://${STATIC_BUCKET}/mortgages/" --delete --cache-control "public,max-age=300"
+
+      - name: Invalidate CloudFront
+        if: steps.preflight.outputs.deploy_ready == 'true' && env.CLOUDFRONT_DISTRIBUTION_ID != ''
+        run: aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/mortgages/*"
