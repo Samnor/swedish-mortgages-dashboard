@@ -22,6 +22,46 @@ main {
   padding: 72px 0;
 }
 
+.language-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 34px;
+  padding: 8px;
+  border: 1px solid rgba(23, 33, 31, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 252, 244, 0.74);
+  box-shadow: 0 14px 32px rgba(80, 63, 43, 0.08);
+}
+
+.language-toggle span {
+  padding: 0 8px;
+  color: #743a22;
+  font-family: "Courier New", monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.language-button {
+  padding: 9px 13px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: #17211f;
+  cursor: pointer;
+  font-family: "Courier New", monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.language-button[aria-pressed="true"] {
+  border-color: #17211f;
+  background: #17211f;
+  color: #fbf4e7;
+}
+
 .hero {
   max-width: 820px;
   margin-bottom: 40px;

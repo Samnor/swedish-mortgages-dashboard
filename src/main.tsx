@@ -16,13 +16,220 @@ import {
 import "./styles.css";
 
 const snapshotUrl = `${import.meta.env.BASE_URL}data/latest.json`;
+const localeStorageKey = "swedish-mortgages-dashboard.locale";
 
-const rateFormatter = new Intl.NumberFormat("en-SE", {
-  maximumFractionDigits: 2,
-  minimumFractionDigits: 2,
-});
+type Locale = "sv" | "en";
 
-function RatesPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
+const copy = {
+  sv: {
+    appLabel: "Svensk bolånekoll",
+    heroTitle: "Marknadsläge innan du förhandlar med banken.",
+    heroBody:
+      "Välj hur länge du funderar på att binda bolånet och få ett marknadsbaserat intervall att använda inför samtalet med banken.",
+    languageLabel: "Språk",
+    swedish: "Svenska",
+    english: "English",
+    rates: {
+      policyRate: "Styrränta",
+      mortgageBond5y: "5-årig bostadsobligation",
+      mortgageBondProxy: "Proxy för säkerställd obligationsfinansiering",
+      latestSourceDate: "Senaste källdatum",
+      vs30dAgo: "mot 30 dagar sedan",
+    },
+    charts: {
+      aria: "Diagram för bolåneförhandling",
+      chart1: "Diagram 1",
+      chart2: "Diagram 2",
+      chart3: "Diagram 3",
+      marketPressure: "Marknadstryck",
+      marketPressureDescription:
+        "Styrränta och säkerställd obligationsfinansiering bakom förhandlingsläget.",
+      durationComparison: "Din bindningstid mot alternativen",
+      durationComparisonDescription:
+        "Bankernas medianräntor och målintervall över bindningstider.",
+      fundingMargin: "Det du förhandlar om",
+      fundingMarginDescription:
+        "Separera finansieringsproxy från marginalutrymmet i observerade räntor.",
+      coveredBondProxy: "5-årig säkerställd obligationsproxy",
+      policyRate: "Styrränta",
+      target: "mål",
+      medianListed: "Median listad",
+      negotiationTarget: "Förhandlingsmål",
+      selected: "Vald",
+      fundingProxy: "Finansieringsproxy",
+      marginRoom: "Marginalutrymme",
+      floor: "Golv",
+      targetLabel: "Mål",
+      ceiling: "Tak",
+    },
+    flow: {
+      label: "Bolåneflöde",
+      step1: "Steg 1",
+      step2: "Steg 2",
+      noDataTitle: "Ingen förhandlingsdata än.",
+      noDataBody:
+        "Appen har räntehistorik, men inga bindningstidsspecifika bankjämförelser i denna snapshot.",
+      question: "Hur länge vill du binda bolånet?",
+      body:
+        "Välj bindningstiden du överväger. Intervallet nedan uppskattar ett realistiskt förhandlingsmål utifrån bankernas listräntor och marknadens finansieringsproxy.",
+      negotiationRange: "förhandlingsintervall",
+      rangeBodyStart: "Använd cirka",
+      rangeBodyMiddle:
+        "som första mål. Det är ungefär",
+      rangeBodyEnd:
+        "under medianlisträntan i denna bindningstid. Intervallet bygger på nedre till övre kvartil för listade räntor, inte på ett garanterat erbjudande.",
+      medianListed: "Median listad",
+      fundingProxy: "Finansieringsproxy",
+      banksSampled: "Banker i urvalet",
+    },
+    diagnostics: {
+      title: "Data- och appdiagnostik",
+      state: "Tillstånd",
+      reads: "Dashboarden läser en publik JSON-snapshot från",
+      complexity:
+        "State machine-komplexitet: max {count} utgående övergångar per tillstånd.",
+      empty: "Inga publika dashboardrader genererades",
+      unavailable: "saknas",
+    },
+  },
+  en: {
+    appLabel: "Swedish Mortgage Intelligence",
+    heroTitle: "Market context before you negotiate with a lender.",
+    heroBody:
+      "Pick the binding period you are considering and get a market-informed range to use before talking to a lender.",
+    languageLabel: "Language",
+    swedish: "Svenska",
+    english: "English",
+    rates: {
+      policyRate: "Policy rate",
+      mortgageBond5y: "5Y mortgage bond",
+      mortgageBondProxy: "Covered bond funding proxy",
+      latestSourceDate: "Latest source date",
+      vs30dAgo: "vs 30d ago",
+    },
+    charts: {
+      aria: "Mortgage negotiation charts",
+      chart1: "Chart 1",
+      chart2: "Chart 2",
+      chart3: "Chart 3",
+      marketPressure: "Market pressure",
+      marketPressureDescription:
+        "Policy rate and covered-bond funding context behind the negotiation.",
+      durationComparison: "Your duration against alternatives",
+      durationComparisonDescription:
+        "Median listed bank rates and target range across binding periods.",
+      fundingMargin: "What you are haggling over",
+      fundingMarginDescription:
+        "Separates market funding proxy from the margin room implied by observed rates.",
+      coveredBondProxy: "5Y covered bond proxy",
+      policyRate: "Policy rate",
+      target: "target",
+      medianListed: "Median listed",
+      negotiationTarget: "Negotiation target",
+      selected: "Selected",
+      fundingProxy: "Funding proxy",
+      marginRoom: "Margin room",
+      floor: "Floor",
+      targetLabel: "Target",
+      ceiling: "Ceiling",
+    },
+    flow: {
+      label: "Mortgage flow",
+      step1: "Step 1",
+      step2: "Step 2",
+      noDataTitle: "No negotiation data yet.",
+      noDataBody:
+        "The app has rate history, but no duration-specific bank comparison rows in this snapshot.",
+      question: "How long do you want to bind your mortgage?",
+      body:
+        "Pick the duration you are considering. The range below estimates a realistic negotiation target from listed bank rates and market funding proxies.",
+      negotiationRange: "negotiation range",
+      rangeBodyStart: "Use around",
+      rangeBodyMiddle:
+        "as a starting target. That is roughly",
+      rangeBodyEnd:
+        "below the median listed rate in this duration bucket. The range is based on the lower-to-upper listed-rate quartiles, not a guaranteed offer.",
+      medianListed: "Median listed",
+      fundingProxy: "Funding proxy",
+      banksSampled: "Banks sampled",
+    },
+    diagnostics: {
+      title: "Data and app diagnostics",
+      state: "State",
+      reads: "The dashboard reads a public JSON snapshot from",
+      complexity:
+        "State machine complexity: max {count} outgoing transitions per state.",
+      empty: "No public dashboard rows were generated at",
+      unavailable: "n/a",
+    },
+  },
+} satisfies Record<Locale, AppCopy>;
+
+type AppCopy = {
+  appLabel: string;
+  heroTitle: string;
+  heroBody: string;
+  languageLabel: string;
+  swedish: string;
+  english: string;
+  rates: Record<
+    "policyRate" | "mortgageBond5y" | "mortgageBondProxy" | "latestSourceDate" | "vs30dAgo",
+    string
+  >;
+  charts: Record<
+    | "aria"
+    | "chart1"
+    | "chart2"
+    | "chart3"
+    | "marketPressure"
+    | "marketPressureDescription"
+    | "durationComparison"
+    | "durationComparisonDescription"
+    | "fundingMargin"
+    | "fundingMarginDescription"
+    | "coveredBondProxy"
+    | "policyRate"
+    | "target"
+    | "medianListed"
+    | "negotiationTarget"
+    | "selected"
+    | "fundingProxy"
+    | "marginRoom"
+    | "floor"
+    | "targetLabel"
+    | "ceiling",
+    string
+  >;
+  flow: Record<
+    | "label"
+    | "step1"
+    | "step2"
+    | "noDataTitle"
+    | "noDataBody"
+    | "question"
+    | "body"
+    | "negotiationRange"
+    | "rangeBodyStart"
+    | "rangeBodyMiddle"
+    | "rangeBodyEnd"
+    | "medianListed"
+    | "fundingProxy"
+    | "banksSampled",
+    string
+  >;
+  diagnostics: Record<
+    "title" | "state" | "reads" | "complexity" | "empty" | "unavailable",
+    string
+  >;
+};
+
+function RatesPanel({
+  labels,
+  snapshot,
+}: {
+  labels: AppCopy["rates"];
+  snapshot: DashboardSnapshot;
+}) {
   const chartOption = {
     animationDuration: 700,
     grid: { left: 42, right: 24, top: 34, bottom: 34 },
@@ -37,13 +244,13 @@ function RatesPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
     },
     series: [
       {
-        name: "Policy rate",
+        name: labels.policyRate,
         type: "line",
         smooth: true,
         data: snapshot.rates.map((row) => row.policyRate),
       },
       {
-        name: "5Y mortgage bond",
+        name: labels.mortgageBond5y,
         type: "line",
         smooth: true,
         data: snapshot.rates.map((row) => row.mortgageBond5y),
@@ -55,43 +262,45 @@ function RatesPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
 }
 
 function InsightCharts({
+  labels,
   options,
   range,
   snapshot,
 }: {
+  labels: AppCopy["charts"];
   options: NegotiationOption[];
   range: NegotiationRange;
   snapshot: DashboardSnapshot;
 }) {
   return (
-    <section className="insight-grid" aria-label="Mortgage negotiation charts">
+    <section className="insight-grid" aria-label={labels.aria}>
       <InsightChart
-        eyebrow="Chart 1"
-        title="Market pressure"
-        description="Policy rate and covered-bond funding context behind the negotiation."
+        eyebrow={labels.chart1}
+        title={labels.marketPressure}
+        description={labels.marketPressureDescription}
       >
         <ReactECharts
-          option={marketPressureOption(snapshot, range)}
+          option={marketPressureOption(snapshot, range, labels)}
           className="insight-chart"
         />
       </InsightChart>
       <InsightChart
-        eyebrow="Chart 2"
-        title="Your duration against alternatives"
-        description="Median listed bank rates and target range across binding periods."
+        eyebrow={labels.chart2}
+        title={labels.durationComparison}
+        description={labels.durationComparisonDescription}
       >
         <ReactECharts
-          option={durationComparisonOption(options, range)}
+          option={durationComparisonOption(options, range, labels)}
           className="insight-chart"
         />
       </InsightChart>
       <InsightChart
-        eyebrow="Chart 3"
-        title="What you are haggling over"
-        description="Separates market funding proxy from the margin room implied by observed rates."
+        eyebrow={labels.chart3}
+        title={labels.fundingMargin}
+        description={labels.fundingMarginDescription}
       >
         <ReactECharts
-          option={fundingMarginOption(range)}
+          option={fundingMarginOption(range, labels)}
           className="insight-chart"
         />
       </InsightChart>
@@ -120,30 +329,46 @@ function InsightChart({
   );
 }
 
-function KpiGrid({ kpis }: { kpis: DashboardKpis }) {
+function KpiGrid({
+  kpis,
+  labels,
+  locale,
+}: {
+  kpis: DashboardKpis;
+  labels: AppCopy["rates"];
+  locale: Locale;
+}) {
   return (
     <section className="kpi-grid" aria-label="Mortgage market summary">
       <KpiCard
-        label="Policy rate"
-        value={`${rateFormatter.format(kpis.latestPolicyRate)}%`}
-        detail={`Latest source date ${kpis.latestDate}`}
+        label={labels.policyRate}
+        value={formatRate(kpis.latestPolicyRate, locale)}
+        detail={`${labels.latestSourceDate} ${kpis.latestDate}`}
         delta={kpis.policyRateChange30d}
+        locale={locale}
+        vsLabel={labels.vs30dAgo}
       />
       <KpiCard
-        label="5Y mortgage bond"
-        value={`${rateFormatter.format(kpis.latestMortgageBond5y)}%`}
-        detail="Covered bond funding proxy"
+        label={labels.mortgageBond5y}
+        value={formatRate(kpis.latestMortgageBond5y, locale)}
+        detail={labels.mortgageBondProxy}
         delta={kpis.mortgageBond5yChange30d}
+        locale={locale}
+        vsLabel={labels.vs30dAgo}
       />
     </section>
   );
 }
 
 function DurationFlow({
+  labels,
+  locale,
   options,
   onSelectPeriod,
   range,
 }: {
+  labels: AppCopy["flow"];
+  locale: Locale;
   options: NegotiationOption[];
   onSelectPeriod: (period: string) => void;
   range: NegotiationRange | null;
@@ -151,12 +376,9 @@ function DurationFlow({
   if (!range) {
     return (
       <section className="flow-panel">
-        <p className="eyebrow">Mortgage flow</p>
-        <h2>No negotiation data yet.</h2>
-        <p>
-          The app has rate history, but no duration-specific bank comparison
-          rows in this snapshot.
-        </p>
+        <p className="eyebrow">{labels.label}</p>
+        <h2>{labels.noDataTitle}</h2>
+        <p>{labels.noDataBody}</p>
       </section>
     );
   }
@@ -164,13 +386,9 @@ function DurationFlow({
   return (
     <section className="flow-panel">
       <div>
-        <p className="eyebrow">Step 1</p>
-        <h2>How long do you want to bind your mortgage?</h2>
-        <p>
-          Pick the duration you are considering. The range below estimates a
-          realistic negotiation target from listed bank rates and market funding
-          proxies.
-        </p>
+        <p className="eyebrow">{labels.step1}</p>
+        <h2>{labels.question}</h2>
+        <p>{labels.body}</p>
         <div className="duration-options" role="list">
           {options.map((option) => (
             <button
@@ -185,37 +403,47 @@ function DurationFlow({
           ))}
         </div>
       </div>
-      <NegotiationRangePanel range={range} />
+      <NegotiationRangePanel labels={labels} locale={locale} range={range} />
     </section>
   );
 }
 
-function NegotiationRangePanel({ range }: { range: NegotiationRange }) {
+function NegotiationRangePanel({
+  labels,
+  locale,
+  range,
+}: {
+  labels: AppCopy["flow"];
+  locale: Locale;
+  range: NegotiationRange;
+}) {
   return (
     <article className="range-card">
-      <p className="eyebrow">Step 2</p>
-      <h2>{range.option.periodLabelDisplay} negotiation range</h2>
+      <p className="eyebrow">{labels.step2}</p>
+      <h2>
+        {range.option.periodLabelDisplay} {labels.negotiationRange}
+      </h2>
       <div className="range-value">
-        {formatRate(range.floorRate)}-{formatRate(range.ceilingRate)}
+        {formatRate(range.floorRate, locale)}-{formatRate(range.ceilingRate, locale)}
       </div>
       <p>
-        Use around <strong>{formatRate(range.midpointRate)}</strong> as a
-        starting target. That is roughly{" "}
-        <strong>{formatDelta(range.discountFromMedianListRate)}</strong> below
-        the median listed rate in this duration bucket. The range is based on
-        the lower-to-upper listed-rate quartiles, not a guaranteed offer.
+        {labels.rangeBodyStart}{" "}
+        <strong>{formatRate(range.midpointRate, locale)}</strong>{" "}
+        {labels.rangeBodyMiddle}{" "}
+        <strong>{formatDelta(range.discountFromMedianListRate, locale)}</strong>{" "}
+        {labels.rangeBodyEnd}
       </p>
       <dl className="range-details">
         <div>
-          <dt>Median listed</dt>
-          <dd>{formatRate(range.option.medianListRate)}</dd>
+          <dt>{labels.medianListed}</dt>
+          <dd>{formatRate(range.option.medianListRate, locale)}</dd>
         </div>
         <div>
-          <dt>Funding proxy</dt>
-          <dd>{formatRate(range.option.medianFundingCost)}</dd>
+          <dt>{labels.fundingProxy}</dt>
+          <dd>{formatRate(range.option.medianFundingCost, locale)}</dd>
         </div>
         <div>
-          <dt>Banks sampled</dt>
+          <dt>{labels.banksSampled}</dt>
           <dd>{range.option.bankCount}</dd>
         </div>
       </dl>
@@ -228,18 +456,24 @@ function KpiCard({
   value,
   detail,
   delta,
+  locale,
+  vsLabel,
 }: {
   label: string;
   value: string;
   detail: string;
   delta: number | null;
+  locale: Locale;
+  vsLabel: string;
 }) {
   return (
     <article className="kpi-card">
       <p className="eyebrow">{label}</p>
       <strong>{value}</strong>
       <span>{detail}</span>
-      <span className="delta">{formatDelta(delta)} vs 30d ago</span>
+      <span className="delta">
+        {formatDelta(delta, locale)} {vsLabel}
+      </span>
     </article>
   );
 }
@@ -247,6 +481,8 @@ function KpiCard({
 function App() {
   const [state, dispatch] = useReducer(transition, { value: "idle" });
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
+  const [locale, setLocale] = useState<Locale>(() => storedLocale() ?? browserLocale());
+  const labels = copy[locale];
 
   useEffect(() => {
     const controller = new AbortController();
@@ -281,6 +517,36 @@ function App() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
+  useEffect(() => {
+    if (storedLocale()) return;
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 1500);
+
+    async function detectLocale() {
+      const detectedLocale = await detectLocaleFromIp(controller.signal);
+      if (detectedLocale) {
+        setLocale(detectedLocale);
+      }
+    }
+
+    void detectLocale().finally(() => window.clearTimeout(timeout));
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, []);
+
+  function chooseLocale(nextLocale: Locale) {
+    window.localStorage.setItem(localeStorageKey, nextLocale);
+    setLocale(nextLocale);
+  }
+
   const snapshot =
     state.value === "ready" || state.value === "stale" ? state.snapshot : null;
   const kpis = snapshot ? deriveDashboardKpis(snapshot) : null;
@@ -295,17 +561,35 @@ function App() {
 
   return (
     <main>
+      <div className="language-toggle" aria-label={labels.languageLabel}>
+        <span>{labels.languageLabel}</span>
+        <button
+          aria-pressed={locale === "sv"}
+          className="language-button"
+          onClick={() => chooseLocale("sv")}
+          type="button"
+        >
+          {labels.swedish}
+        </button>
+        <button
+          aria-pressed={locale === "en"}
+          className="language-button"
+          onClick={() => chooseLocale("en")}
+          type="button"
+        >
+          {labels.english}
+        </button>
+      </div>
       <section className="hero">
-        <p className="eyebrow">Swedish Mortgage Intelligence</p>
-        <h1>Market context before you negotiate with a lender.</h1>
-        <p>
-          Pick the binding period you are considering and get a market-informed
-          range to use before talking to a lender.
-        </p>
+        <p className="eyebrow">{labels.appLabel}</p>
+        <h1>{labels.heroTitle}</h1>
+        <p>{labels.heroBody}</p>
       </section>
 
       {snapshot ? (
         <DurationFlow
+          labels={labels.flow}
+          locale={locale}
           onSelectPeriod={setSelectedPeriod}
           options={negotiationOptions}
           range={selectedRange}
@@ -314,6 +598,7 @@ function App() {
 
       {snapshot && selectedRange ? (
         <InsightCharts
+          labels={labels.charts}
           options={negotiationOptions}
           range={selectedRange}
           snapshot={snapshot}
@@ -323,14 +608,16 @@ function App() {
       <section className="panel diagnostics-panel">
         <div>
           <details>
-            <summary>Data and app diagnostics</summary>
+            <summary>{labels.diagnostics.title}</summary>
             <p>
-              State: <strong>{state.value}</strong>. The dashboard reads a public
-              JSON snapshot from <code>{snapshotUrl}</code>.
+              {labels.diagnostics.state}: <strong>{state.value}</strong>.{" "}
+              {labels.diagnostics.reads} <code>{snapshotUrl}</code>.
             </p>
             <p>
-              State machine complexity: max {maxOutgoingTransitions} outgoing
-              transitions per state.
+              {labels.diagnostics.complexity.replace(
+                "{count}",
+                String(maxOutgoingTransitions),
+              )}
             </p>
             <dl className="complexity-list">
               {Object.entries(stateComplexity).map(([name, count]) => (
@@ -344,13 +631,19 @@ function App() {
           {state.value === "stale" ? <p>{state.reason}</p> : null}
           {state.value === "error" ? <p>{state.message}</p> : null}
           {state.value === "empty" ? (
-            <p>No public dashboard rows were generated at {state.generatedAt}.</p>
+            <p>
+              {labels.diagnostics.empty} {state.generatedAt}.
+            </p>
           ) : null}
         </div>
-        {snapshot ? <RatesPanel snapshot={snapshot} /> : <div className="chart" />}
+        {snapshot ? (
+          <RatesPanel labels={labels.rates} snapshot={snapshot} />
+        ) : (
+          <div className="chart" />
+        )}
       </section>
 
-      {kpis ? <KpiGrid kpis={kpis} /> : null}
+      {kpis ? <KpiGrid kpis={kpis} labels={labels.rates} locale={locale} /> : null}
     </main>
   );
 }
@@ -358,6 +651,7 @@ function App() {
 function marketPressureOption(
   snapshot: DashboardSnapshot,
   range: NegotiationRange,
+  labels: AppCopy["charts"],
 ) {
   return {
     animationDuration: 700,
@@ -374,19 +668,19 @@ function marketPressureOption(
     },
     series: [
       {
-        name: "Policy rate",
+        name: labels.policyRate,
         type: "line",
         smooth: true,
         data: snapshot.rates.map((row) => row.policyRate),
       },
       {
-        name: "5Y covered bond proxy",
+        name: labels.coveredBondProxy,
         type: "line",
         smooth: true,
         data: snapshot.rates.map((row) => row.mortgageBond5y),
       },
       {
-        name: `${range.option.periodLabelDisplay} target`,
+        name: `${range.option.periodLabelDisplay} ${labels.target}`,
         type: "line",
         symbol: "none",
         lineStyle: { type: "dashed", width: 2 },
@@ -399,6 +693,7 @@ function marketPressureOption(
 function durationComparisonOption(
   options: NegotiationOption[],
   range: NegotiationRange,
+  labels: AppCopy["charts"],
 ) {
   return {
     animationDuration: 700,
@@ -415,18 +710,18 @@ function durationComparisonOption(
     },
     series: [
       {
-        name: "Median listed",
+        name: labels.medianListed,
         type: "bar",
         data: options.map((option) => option.medianListRate),
       },
       {
-        name: "Negotiation target",
+        name: labels.negotiationTarget,
         type: "line",
         smooth: true,
         data: options.map((option) => deriveNegotiationRange(option).midpointRate),
       },
       {
-        name: "Selected",
+        name: labels.selected,
         type: "scatter",
         symbolSize: 18,
         data: options.map((option) =>
@@ -439,7 +734,7 @@ function durationComparisonOption(
   };
 }
 
-function fundingMarginOption(range: NegotiationRange) {
+function fundingMarginOption(range: NegotiationRange, labels: AppCopy["charts"]) {
   const marginLow = range.floorRate - range.option.medianFundingCost;
   const marginHigh = range.ceilingRate - range.option.medianFundingCost;
 
@@ -453,7 +748,12 @@ function fundingMarginOption(range: NegotiationRange) {
     },
     xAxis: {
       type: "category",
-      data: ["Floor", "Target", "Ceiling", "Median listed"],
+      data: [
+        labels.floor,
+        labels.targetLabel,
+        labels.ceiling,
+        labels.medianListed,
+      ],
     },
     yAxis: {
       type: "value",
@@ -461,7 +761,7 @@ function fundingMarginOption(range: NegotiationRange) {
     },
     series: [
       {
-        name: "Funding proxy",
+        name: labels.fundingProxy,
         type: "bar",
         stack: "rate",
         data: [
@@ -472,7 +772,7 @@ function fundingMarginOption(range: NegotiationRange) {
         ],
       },
       {
-        name: "Margin room",
+        name: labels.marginRoom,
         type: "bar",
         stack: "rate",
         data: [
@@ -486,14 +786,44 @@ function fundingMarginOption(range: NegotiationRange) {
   };
 }
 
-function formatRate(value: number): string {
-  return `${rateFormatter.format(value)}%`;
+function numberFormatter(locale: Locale) {
+  return new Intl.NumberFormat(locale === "sv" ? "sv-SE" : "en-SE", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  });
 }
 
-function formatDelta(delta: number | null): string {
-  if (delta === null) return "n/a";
+function formatRate(value: number, locale: Locale): string {
+  return `${numberFormatter(locale).format(value)}%`;
+}
+
+function formatDelta(delta: number | null, locale: Locale): string {
+  if (delta === null) return copy[locale].diagnostics.unavailable;
   const prefix = delta > 0 ? "+" : "";
-  return `${prefix}${rateFormatter.format(delta)} pp`;
+  return `${prefix}${numberFormatter(locale).format(delta)} pp`;
+}
+
+function browserLocale(): Locale {
+  return navigator.language.toLowerCase().startsWith("sv") ? "sv" : "en";
+}
+
+function storedLocale(): Locale | null {
+  const savedLocale = window.localStorage.getItem(localeStorageKey);
+  return savedLocale === "sv" || savedLocale === "en" ? savedLocale : null;
+}
+
+async function detectLocaleFromIp(signal: AbortSignal): Promise<Locale | null> {
+  try {
+    const response = await fetch("https://ipapi.co/country/", {
+      cache: "no-store",
+      signal,
+    });
+    if (!response.ok) return null;
+    const countryCode = (await response.text()).trim().toUpperCase();
+    return countryCode === "SE" ? "sv" : "en";
+  } catch {
+    return null;
+  }
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
