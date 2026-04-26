@@ -50,10 +50,13 @@ export type NegotiationRange = {
   discountFromMedianListRate: number;
 };
 
+export type ConfidenceLevel = "high" | "medium" | "low";
+
 export type DashboardState =
   | { value: "idle" }
   | { value: "loading" }
   | { value: "ready"; snapshot: DashboardSnapshot }
+  | { value: "pipeline_inspection"; snapshot: DashboardSnapshot }
   | { value: "empty"; generatedAt: string }
   | { value: "stale"; snapshot: DashboardSnapshot; reason: string }
   | { value: "error"; message: string };
@@ -63,6 +66,8 @@ export type DashboardEvent =
   | { type: "LOAD_SUCCEEDED"; snapshot: DashboardSnapshot }
   | { type: "LOAD_FAILED"; message: string }
   | { type: "MARK_STALE"; reason: string }
+  | { type: "VIEW_PIPELINE" }
+  | { type: "CLOSE_PIPELINE" }
   | { type: "RETRY" };
 
 export type DashboardStateValue = DashboardState["value"];
@@ -74,7 +79,8 @@ const MAX_OUTGOING_TRANSITIONS_PER_STATE = 3;
 export const transitionMap = {
   idle: ["START"],
   loading: ["LOAD_FAILED", "LOAD_SUCCEEDED"],
-  ready: ["MARK_STALE", "RETRY"],
+  ready: ["MARK_STALE", "RETRY", "VIEW_PIPELINE"],
+  pipeline_inspection: ["CLOSE_PIPELINE", "RETRY"],
   empty: ["RETRY"],
   stale: ["RETRY"],
   error: ["RETRY"],
@@ -162,6 +168,12 @@ export function deriveNegotiationRange(
   };
 }
 
+export function confidenceForBankCount(bankCount: number): ConfidenceLevel {
+  if (bankCount >= 3) return "high";
+  if (bankCount === 2) return "medium";
+  return "low";
+}
+
 export function transition(
   state: DashboardState,
   event: DashboardEvent,
@@ -194,6 +206,16 @@ export function transition(
     case "ready":
       if (event.type === "MARK_STALE") {
         return { value: "stale", snapshot: state.snapshot, reason: event.reason };
+      }
+      if (event.type === "VIEW_PIPELINE") {
+        return { value: "pipeline_inspection", snapshot: state.snapshot };
+      }
+      if (event.type === "RETRY") return { value: "loading" };
+      return state;
+
+    case "pipeline_inspection":
+      if (event.type === "CLOSE_PIPELINE") {
+        return { value: "ready", snapshot: state.snapshot };
       }
       if (event.type === "RETRY") return { value: "loading" };
       return state;

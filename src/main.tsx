@@ -2,6 +2,7 @@ import React, { useEffect, useReducer, useState } from "react";
 import { createRoot } from "react-dom/client";
 import ReactECharts from "echarts-for-react";
 import {
+  confidenceForBankCount,
   deriveDashboardKpis,
   deriveNegotiationRange,
   maxOutgoingTransitions,
@@ -13,6 +14,7 @@ import {
   type NegotiationOption,
   type NegotiationRange,
   type SourceLink,
+  type ConfidenceLevel,
 } from "./dashboardMachine";
 import "./styles.css";
 
@@ -71,18 +73,30 @@ const copy = {
       noDataTitle: "Ingen förhandlingsdata än.",
       noDataBody:
         "Appen har räntehistorik, men inga bindningstidsspecifika bankjämförelser i denna snapshot.",
+      waitingTitle: "Välj en bindningstid för att se ett startintervall.",
+      waitingBody:
+        "Vi visar inte ett förvalt råd. Välj först hur länge du funderar på att binda lånet, så räknar appen fram ett intervall och rätt diagram för just den tiden.",
       question: "Hur länge vill du binda bolånet?",
       body:
-        "Välj bindningstiden du överväger. Intervallet nedan uppskattar ett realistiskt förhandlingsmål utifrån bankernas listräntor och marknadens finansieringsproxy.",
-      negotiationRange: "förhandlingsintervall",
+        "Välj bindningstiden du överväger. Intervallet nedan är en startpunkt för samtalet, baserad på bankernas listräntor och marknadens finansieringsproxy.",
+      negotiationRange: "startintervall",
       rangeBodyStart: "Använd cirka",
       rangeBodyMiddle:
-        "som första mål. Det är ungefär",
+        "som första samtalsmål. Det är ungefär",
       rangeBodyEnd:
-        "under medianlisträntan i denna bindningstid. Intervallet bygger på nedre till övre kvartil för listade räntor, inte på ett garanterat erbjudande.",
+        "under medianlisträntan i denna bindningstid. Intervallet är inte ett garanterat erbjudande.",
       medianListed: "Median listad",
       fundingProxy: "Finansieringsproxy",
       banksSampled: "Banker i urvalet",
+      latestMarketDate: "Senaste marknadsdatum",
+      confidence: "Tillförlitlighet",
+      highConfidence: "Hög",
+      mediumConfidence: "Medel",
+      lowConfidence: "Låg",
+      lowConfidenceNote:
+        "Få banker i urvalet. Använd intervallet som grov signal, inte som stark marknadsnivå.",
+      assumptionNote:
+        "Bygger på listräntor, säkerställda obligationsproxys och en enkel marginalmodell. Faktiska kundrabatter kan avvika.",
     },
     diagnostics: {
       title: "Data- och appdiagnostik",
@@ -99,6 +113,36 @@ const copy = {
         "Länkarna går till de publika källor och referenser som används för räntor, bankjämförelser och marginalkontext.",
       empty: "Inga publika källänkar finns i denna snapshot.",
       usedFor: "Används för",
+    },
+    pipeline: {
+      eyebrow: "Under huven",
+      title: "Så blir rådata till ett beslutsunderlag",
+      body:
+        "Den här appen är också ett exempel på data engineering: råa publika källor modelleras i dbt, kontrolleras i CI och exporteras som en liten publik JSON-snapshot som är billig att serva.",
+      cta: "Visa dbt-pipelinen",
+      close: "Tillbaka till appen",
+      steps: [
+        {
+          title: "1. Rådata landar i data lake",
+          body:
+            "Riksbankens räntor, SCB-data och bankernas publicerade listräntor samlas i separata råtabeller.",
+        },
+        {
+          title: "2. dbt städar och modellerar",
+          body:
+            "Staging-modeller typkonverterar och deduplicerar. Mart-modeller bygger räntedag, bankjämförelser och finansieringsproxy.",
+        },
+        {
+          title: "3. CI och kontrakt skyddar appen",
+          body:
+            "Validatorn kräver sorterade tidsserier, rimliga kvartiler, källänkar och icke-tomma förhandlingsalternativ.",
+        },
+        {
+          title: "4. Appen får bara en kuraterad snapshot",
+          body:
+            "Publika användare frågar aldrig Athena. GitHub Actions exporterar en kompakt JSON-fil till S3 och CloudFront.",
+        },
+      ],
     },
     fundingIntro: {
       eyebrow: "Innan du väljer bindningstid",
@@ -172,18 +216,30 @@ const copy = {
       noDataTitle: "No negotiation data yet.",
       noDataBody:
         "The app has rate history, but no duration-specific bank comparison rows in this snapshot.",
+      waitingTitle: "Pick a binding period to see a starting range.",
+      waitingBody:
+        "The app does not show a default recommendation. Choose the period you are considering first, then it calculates the range and charts for that period.",
       question: "How long do you want to bind your mortgage?",
       body:
-        "Pick the duration you are considering. The range below estimates a realistic negotiation target from listed bank rates and market funding proxies.",
-      negotiationRange: "negotiation range",
+        "Pick the duration you are considering. The range below is a starting point for the conversation, based on listed bank rates and market funding proxies.",
+      negotiationRange: "starting range",
       rangeBodyStart: "Use around",
       rangeBodyMiddle:
-        "as a starting target. That is roughly",
+        "as an opening target. That is roughly",
       rangeBodyEnd:
-        "below the median listed rate in this duration bucket. The range is based on the lower-to-upper listed-rate quartiles, not a guaranteed offer.",
+        "below the median listed rate in this duration bucket. The range is not a guaranteed offer.",
       medianListed: "Median listed",
       fundingProxy: "Funding proxy",
       banksSampled: "Banks sampled",
+      latestMarketDate: "Latest market date",
+      confidence: "Confidence",
+      highConfidence: "High",
+      mediumConfidence: "Medium",
+      lowConfidence: "Low",
+      lowConfidenceNote:
+        "Few banks in the sample. Use the range as a rough signal, not a strong market level.",
+      assumptionNote:
+        "Based on listed rates, covered-bond proxies and a simple margin model. Actual customer discounts can differ.",
     },
     diagnostics: {
       title: "Data and app diagnostics",
@@ -200,6 +256,36 @@ const copy = {
         "These links point to the public sources and references used for rates, bank comparisons and margin context.",
       empty: "No public source links are included in this snapshot.",
       usedFor: "Used for",
+    },
+    pipeline: {
+      eyebrow: "Under the hood",
+      title: "How raw data becomes a decision aid",
+      body:
+        "This app is also a data engineering case study: public raw sources are modeled in dbt, checked in CI and exported as a small public JSON snapshot that is cheap to serve.",
+      cta: "Show the dbt pipeline",
+      close: "Back to the app",
+      steps: [
+        {
+          title: "1. Raw data lands in the data lake",
+          body:
+            "Riksbank rates, SCB data and bank published list rates land in separate raw tables.",
+        },
+        {
+          title: "2. dbt cleans and models",
+          body:
+            "Staging models type and deduplicate data. Mart models produce daily rates, bank comparisons and funding proxies.",
+        },
+        {
+          title: "3. CI and contracts protect the app",
+          body:
+            "The validator requires sorted time series, ordered quantiles, source links and non-empty negotiation options.",
+        },
+        {
+          title: "4. The app gets only a curated snapshot",
+          body:
+            "Public users never query Athena. GitHub Actions exports compact JSON to S3 and CloudFront.",
+        },
+      ],
     },
     fundingIntro: {
       eyebrow: "Before you pick a binding period",
@@ -268,6 +354,8 @@ type AppCopy = {
     | "step2"
     | "noDataTitle"
     | "noDataBody"
+    | "waitingTitle"
+    | "waitingBody"
     | "question"
     | "body"
     | "negotiationRange"
@@ -276,7 +364,14 @@ type AppCopy = {
     | "rangeBodyEnd"
     | "medianListed"
     | "fundingProxy"
-    | "banksSampled",
+    | "banksSampled"
+    | "latestMarketDate"
+    | "confidence"
+    | "highConfidence"
+    | "mediumConfidence"
+    | "lowConfidence"
+    | "lowConfidenceNote"
+    | "assumptionNote",
     string
   >;
   diagnostics: Record<
@@ -284,6 +379,14 @@ type AppCopy = {
     string
   >;
   sources: Record<"title" | "body" | "empty" | "usedFor", string>;
+  pipeline: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    cta: string;
+    close: string;
+    steps: Array<{ title: string; body: string }>;
+  };
   fundingIntro: {
     eyebrow: string;
     title: string;
@@ -484,20 +587,72 @@ function FundingIntro({ labels }: { labels: AppCopy["fundingIntro"] }) {
   );
 }
 
+function PipelinePanel({
+  labels,
+  onClose,
+}: {
+  labels: AppCopy["pipeline"];
+  onClose: () => void;
+}) {
+  return (
+    <section className="pipeline-panel">
+      <div>
+        <p className="eyebrow">{labels.eyebrow}</p>
+        <h2>{labels.title}</h2>
+        <p>{labels.body}</p>
+        <button className="secondary-button" onClick={onClose} type="button">
+          {labels.close}
+        </button>
+      </div>
+      <div className="pipeline-steps">
+        {labels.steps.map((step) => (
+          <article className="pipeline-step" key={step.title}>
+            <strong>{step.title}</strong>
+            <span>{step.body}</span>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PipelineTeaser({
+  labels,
+  onOpen,
+}: {
+  labels: AppCopy["pipeline"];
+  onOpen: () => void;
+}) {
+  return (
+    <section className="pipeline-teaser">
+      <div>
+        <p className="eyebrow">{labels.eyebrow}</p>
+        <h2>{labels.title}</h2>
+        <p>{labels.body}</p>
+      </div>
+      <button className="secondary-button" onClick={onOpen} type="button">
+        {labels.cta}
+      </button>
+    </section>
+  );
+}
+
 function DurationFlow({
   labels,
   locale,
+  latestDate,
   options,
   onSelectPeriod,
   range,
 }: {
   labels: AppCopy["flow"];
   locale: Locale;
+  latestDate: string | null;
   options: NegotiationOption[];
   onSelectPeriod: (period: string) => void;
   range: NegotiationRange | null;
 }) {
-  if (!range) {
+  if (options.length === 0) {
     return (
       <section className="flow-panel">
         <p className="eyebrow">{labels.label}</p>
@@ -516,7 +671,7 @@ function DurationFlow({
         <div className="duration-options" role="list">
           {options.map((option) => (
             <button
-              aria-pressed={option.periodLabel === range.option.periodLabel}
+              aria-pressed={option.periodLabel === range?.option.periodLabel}
               className="duration-button"
               key={option.periodLabel}
               onClick={() => onSelectPeriod(option.periodLabel)}
@@ -527,20 +682,37 @@ function DurationFlow({
           ))}
         </div>
       </div>
-      <NegotiationRangePanel labels={labels} locale={locale} range={range} />
+      {range ? (
+        <NegotiationRangePanel
+          labels={labels}
+          latestDate={latestDate}
+          locale={locale}
+          range={range}
+        />
+      ) : (
+        <article className="range-card range-card-empty">
+          <p className="eyebrow">{labels.step2}</p>
+          <h2>{labels.waitingTitle}</h2>
+          <p>{labels.waitingBody}</p>
+        </article>
+      )}
     </section>
   );
 }
 
 function NegotiationRangePanel({
   labels,
+  latestDate,
   locale,
   range,
 }: {
   labels: AppCopy["flow"];
+  latestDate: string | null;
   locale: Locale;
   range: NegotiationRange;
 }) {
+  const confidence = confidenceForBankCount(range.option.bankCount);
+
   return (
     <article className="range-card">
       <p className="eyebrow">{labels.step2}</p>
@@ -557,6 +729,10 @@ function NegotiationRangePanel({
         <strong>{formatDelta(range.discountFromMedianListRate, locale)}</strong>{" "}
         {labels.rangeBodyEnd}
       </p>
+      <p className="assumption-note">{labels.assumptionNote}</p>
+      {confidence === "low" ? (
+        <p className="confidence-warning">{labels.lowConfidenceNote}</p>
+      ) : null}
       <dl className="range-details">
         <div>
           <dt>{labels.medianListed}</dt>
@@ -569,6 +745,14 @@ function NegotiationRangePanel({
         <div>
           <dt>{labels.banksSampled}</dt>
           <dd>{range.option.bankCount}</dd>
+        </div>
+        <div>
+          <dt>{labels.confidence}</dt>
+          <dd>{confidenceLabel(labels, confidence)}</dd>
+        </div>
+        <div>
+          <dt>{labels.latestMarketDate}</dt>
+          <dd>{latestDate ?? copy[locale].diagnostics.unavailable}</dd>
         </div>
       </dl>
     </article>
@@ -672,16 +856,21 @@ function App() {
   }
 
   const snapshot =
-    state.value === "ready" || state.value === "stale" ? state.snapshot : null;
+    state.value === "ready" ||
+    state.value === "stale" ||
+    state.value === "pipeline_inspection"
+      ? state.snapshot
+      : null;
   const kpis = snapshot ? deriveDashboardKpis(snapshot) : null;
   const negotiationOptions = snapshot?.negotiationOptions ?? [];
   const selectedOption =
     negotiationOptions.find((option) => option.periodLabel === selectedPeriod) ??
-    negotiationOptions[0] ??
     null;
   const selectedRange = selectedOption
     ? deriveNegotiationRange(selectedOption)
     : null;
+  const canInspectPipeline =
+    state.value === "ready" || state.value === "pipeline_inspection";
 
   return (
     <main>
@@ -717,6 +906,7 @@ function App() {
       {snapshot ? (
         <DurationFlow
           labels={labels.flow}
+          latestDate={kpis?.latestDate ?? null}
           locale={locale}
           onSelectPeriod={setSelectedPeriod}
           options={negotiationOptions}
@@ -731,6 +921,20 @@ function App() {
           range={selectedRange}
           snapshot={snapshot}
         />
+      ) : null}
+
+      {snapshot && canInspectPipeline ? (
+        state.value === "pipeline_inspection" ? (
+          <PipelinePanel
+            labels={labels.pipeline}
+            onClose={() => dispatch({ type: "CLOSE_PIPELINE" })}
+          />
+        ) : (
+          <PipelineTeaser
+            labels={labels.pipeline}
+            onOpen={() => dispatch({ type: "VIEW_PIPELINE" })}
+          />
+        )
       ) : null}
 
       {snapshot ? (
@@ -934,6 +1138,15 @@ function formatDelta(delta: number | null, locale: Locale): string {
   if (delta === null) return copy[locale].diagnostics.unavailable;
   const prefix = delta > 0 ? "+" : "";
   return `${prefix}${numberFormatter(locale).format(delta)} pp`;
+}
+
+function confidenceLabel(
+  labels: AppCopy["flow"],
+  confidence: ConfidenceLevel,
+): string {
+  if (confidence === "high") return labels.highConfidence;
+  if (confidence === "medium") return labels.mediumConfidence;
+  return labels.lowConfidence;
 }
 
 function browserLocale(): Locale {

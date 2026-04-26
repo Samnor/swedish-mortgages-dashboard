@@ -202,6 +202,12 @@ code {
   color: inherit;
 }
 
+.range-card-empty {
+  display: grid;
+  align-content: center;
+  min-height: 100%;
+}
+
 .range-value {
   margin: 22px 0 14px;
   color: #f7c578;
@@ -213,7 +219,7 @@ code {
 
 .range-details {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 8px;
   margin: 22px 0 0;
 }
@@ -237,6 +243,20 @@ code {
   margin: 4px 0 0;
   font-size: 1.2rem;
   font-weight: 700;
+}
+
+.assumption-note,
+.confidence-warning {
+  margin: 12px 0 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.confidence-warning {
+  padding: 12px;
+  border: 1px solid rgba(247, 197, 120, 0.34);
+  border-radius: 16px;
+  background: rgba(247, 197, 120, 0.1);
 }
 
 .funding-intro {
@@ -284,6 +304,66 @@ code {
   color: #53615d;
   font-size: 0.96rem;
   line-height: 1.45;
+}
+
+.pipeline-teaser,
+.pipeline-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.45fr);
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 28px;
+  border: 1px solid rgba(23, 33, 31, 0.14);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(23, 33, 31, 0.1), transparent 18rem),
+    rgba(255, 252, 244, 0.8);
+  box-shadow: 0 20px 52px rgba(80, 63, 43, 0.09);
+}
+
+.pipeline-teaser {
+  align-items: center;
+}
+
+.pipeline-steps {
+  display: grid;
+  gap: 10px;
+}
+
+.pipeline-step {
+  padding: 16px;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.pipeline-step strong,
+.pipeline-step span {
+  display: block;
+}
+
+.pipeline-step strong {
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+.pipeline-step span {
+  color: #53615d;
+  font-size: 0.96rem;
+  line-height: 1.45;
+}
+
+.secondary-button {
+  width: fit-content;
+  padding: 13px 16px;
+  border: 1px solid rgba(23, 33, 31, 0.18);
+  border-radius: 999px;
+  background: #17211f;
+  color: #fbf4e7;
+  cursor: pointer;
+  font-family: "Courier New", monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 .insight-grid {
@@ -438,6 +518,11 @@ code {
   }
 
   .funding-intro {
+    grid-template-columns: 1fr;
+  }
+
+  .pipeline-teaser,
+  .pipeline-panel {
     grid-template-columns: 1fr;
   }
 
