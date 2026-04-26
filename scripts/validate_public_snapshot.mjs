@@ -12,6 +12,19 @@ assertOptionalString(snapshot.queryId, "queryId");
 assertOptionalString(snapshot.negotiationSource, "negotiationSource");
 assertOptionalString(snapshot.negotiationQueryId, "negotiationQueryId");
 
+if (snapshot.sourceLinks !== undefined) {
+  if (!Array.isArray(snapshot.sourceLinks)) {
+    throw new Error("Expected sourceLinks to be an array when present.");
+  }
+  snapshot.sourceLinks.forEach((row, index) => {
+    assertRecord(row, `sourceLinks[${index}]`);
+    assertString(row.id, `sourceLinks[${index}].id`);
+    assertString(row.label, `sourceLinks[${index}].label`);
+    assertHttpsUrl(row.url, `sourceLinks[${index}].url`);
+    assertString(row.usedFor, `sourceLinks[${index}].usedFor`);
+  });
+}
+
 if (!Array.isArray(snapshot.rates)) {
   throw new Error("Expected rates to be an array.");
 }
@@ -108,5 +121,12 @@ function assertFiniteNumber(value, label) {
 function assertOptionalString(value, label) {
   if (value !== undefined && typeof value !== "string") {
     throw new Error(`Expected ${label} to be a string when present.`);
+  }
+}
+
+function assertHttpsUrl(value, label) {
+  assertString(value, label);
+  if (!value.startsWith("https://")) {
+    throw new Error(`Expected ${label} to use HTTPS.`);
   }
 }

@@ -12,10 +12,12 @@ import {
   type DashboardSnapshot,
   type NegotiationOption,
   type NegotiationRange,
+  type SourceLink,
 } from "./dashboardMachine";
 import "./styles.css";
 
 const snapshotUrl = `${import.meta.env.BASE_URL}data/latest.json`;
+const localeUrl = `${import.meta.env.BASE_URL}locale.json`;
 const localeStorageKey = "swedish-mortgages-dashboard.locale";
 
 type Locale = "sv" | "en";
@@ -91,6 +93,13 @@ const copy = {
       empty: "Inga publika dashboardrader genererades",
       unavailable: "saknas",
     },
+    sources: {
+      title: "Källor bakom datapunkterna",
+      body:
+        "Länkarna går till de publika källor och referenser som används för räntor, bankjämförelser och marginalkontext.",
+      empty: "Inga publika källänkar finns i denna snapshot.",
+      usedFor: "Används för",
+    },
   },
   en: {
     appLabel: "Swedish Mortgage Intelligence",
@@ -162,6 +171,13 @@ const copy = {
       empty: "No public dashboard rows were generated at",
       unavailable: "n/a",
     },
+    sources: {
+      title: "Sources behind the data points",
+      body:
+        "These links point to the public sources and references used for rates, bank comparisons and margin context.",
+      empty: "No public source links are included in this snapshot.",
+      usedFor: "Used for",
+    },
   },
 } satisfies Record<Locale, AppCopy>;
 
@@ -221,6 +237,7 @@ type AppCopy = {
     "title" | "state" | "reads" | "complexity" | "empty" | "unavailable",
     string
   >;
+  sources: Record<"title" | "body" | "empty" | "usedFor", string>;
 };
 
 function RatesPanel({
@@ -356,6 +373,41 @@ function KpiGrid({
         locale={locale}
         vsLabel={labels.vs30dAgo}
       />
+    </section>
+  );
+}
+
+function SourceLinksPanel({
+  labels,
+  sources,
+}: {
+  labels: AppCopy["sources"];
+  sources: SourceLink[];
+}) {
+  return (
+    <section className="source-panel">
+      <div>
+        <p className="eyebrow">{labels.title}</p>
+        <p>{sources.length > 0 ? labels.body : labels.empty}</p>
+      </div>
+      {sources.length > 0 ? (
+        <div className="source-grid">
+          {sources.map((source) => (
+            <a
+              className="source-link"
+              href={source.url}
+              key={source.id}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <strong>{source.label}</strong>
+              <span>
+                {labels.usedFor}: {source.usedFor}
+              </span>
+            </a>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -528,7 +580,7 @@ function App() {
     const timeout = window.setTimeout(() => controller.abort(), 1500);
 
     async function detectLocale() {
-      const detectedLocale = await detectLocaleFromIp(controller.signal);
+      const detectedLocale = await detectLocaleFromEdge(controller.signal);
       if (detectedLocale) {
         setLocale(detectedLocale);
       }
@@ -602,6 +654,13 @@ function App() {
           options={negotiationOptions}
           range={selectedRange}
           snapshot={snapshot}
+        />
+      ) : null}
+
+      {snapshot ? (
+        <SourceLinksPanel
+          labels={labels.sources}
+          sources={snapshot.sourceLinks}
         />
       ) : null}
 
@@ -812,18 +871,25 @@ function storedLocale(): Locale | null {
   return savedLocale === "sv" || savedLocale === "en" ? savedLocale : null;
 }
 
-async function detectLocaleFromIp(signal: AbortSignal): Promise<Locale | null> {
+async function detectLocaleFromEdge(signal: AbortSignal): Promise<Locale | null> {
   try {
-    const response = await fetch("https://ipapi.co/country/", {
+    const response = await fetch(localeUrl, {
       cache: "no-store",
       signal,
     });
     if (!response.ok) return null;
-    const countryCode = (await response.text()).trim().toUpperCase();
-    return countryCode === "SE" ? "sv" : "en";
+    const payload: unknown = await response.json();
+    if (!isLocalePayload(payload)) return null;
+    return payload.locale;
   } catch {
     return null;
   }
+}
+
+function isLocalePayload(payload: unknown): payload is { locale: Locale } {
+  if (typeof payload !== "object" || payload === null) return false;
+  const locale = (payload as { locale?: unknown }).locale;
+  return locale === "sv" || locale === "en";
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

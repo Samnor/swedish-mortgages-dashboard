@@ -20,10 +20,18 @@ export type NegotiationOption = {
   bankCount: number;
 };
 
+export type SourceLink = {
+  id: string;
+  label: string;
+  url: string;
+  usedFor: string;
+};
+
 export type DashboardSnapshot = {
   generatedAt: string;
   rates: RatePoint[];
   negotiationOptions: NegotiationOption[];
+  sourceLinks: SourceLink[];
 };
 
 export type DashboardKpis = {
@@ -108,6 +116,7 @@ export function parseDashboardSnapshot(input: unknown): DashboardSnapshot {
     generatedAt,
     rates: input.rates.map(parseRatePoint),
     negotiationOptions: readNegotiationOptions(input),
+    sourceLinks: readSourceLinks(input),
   };
   validateDashboardSnapshot(snapshot);
   return snapshot;
@@ -256,6 +265,31 @@ function readNegotiationOptions(input: Record<string, unknown>): NegotiationOpti
     throw new Error("Dashboard snapshot is missing negotiationOptions.");
   }
   return input.negotiationOptions.map(parseNegotiationOption);
+}
+
+function readSourceLinks(input: Record<string, unknown>): SourceLink[] {
+  if (input.sourceLinks === undefined) return [];
+  if (!Array.isArray(input.sourceLinks)) {
+    throw new Error("Expected sourceLinks to be an array when present.");
+  }
+  return input.sourceLinks.map(parseSourceLink);
+}
+
+function parseSourceLink(input: unknown): SourceLink {
+  if (!isRecord(input)) {
+    throw new Error("Source link must be an object.");
+  }
+
+  const sourceLink = {
+    id: readString(input, "id"),
+    label: readString(input, "label"),
+    url: readString(input, "url"),
+    usedFor: readString(input, "usedFor"),
+  };
+  if (!sourceLink.url.startsWith("https://")) {
+    throw new Error("Source link URLs must use HTTPS.");
+  }
+  return sourceLink;
 }
 
 function readString(input: Record<string, unknown>, key: string): string {

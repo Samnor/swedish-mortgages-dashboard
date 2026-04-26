@@ -11,6 +11,10 @@ dbt prod/dev marts
   -> static React dashboard under /mortgages
 ```
 
+Locale defaulting is first-party. The CloudFront Function returns
+`/mortgages/locale.json` from the built-in `CloudFront-Viewer-Country` header,
+so the browser does not call a third-party IP geolocation service.
+
 ## Principles
 
 - Public users never query Athena directly.

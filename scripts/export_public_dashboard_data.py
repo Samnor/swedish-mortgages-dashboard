@@ -19,6 +19,33 @@ from pathlib import Path
 DEFAULT_ATHENA_OUTPUT = "s3://athena-queries-funfun/dashboard-exports/"
 QUERY_TIMEOUT_SECONDS = 120
 
+PUBLIC_SOURCE_LINKS = [
+    {
+        "id": "riksbank-swea",
+        "label": "Sveriges Riksbank statistics",
+        "url": "https://www.riksbank.se/en-gb/statistics/search-interest--exchange-rates/",
+        "usedFor": "Policy rate, government-bond yields, covered-bond yield proxies, STIBOR and SWESTR inputs.",
+    },
+    {
+        "id": "bank-listed-rates",
+        "label": "Bank published mortgage rates",
+        "url": "https://www.sbab.se/1/privat/lana/bolan/bolanerantor.html",
+        "usedFor": "Listed-rate comparison sample. Current scraper coverage includes SBAB, Nordea and Swedbank.",
+    },
+    {
+        "id": "scb-rantat04n",
+        "label": "Statistics Sweden RantaT04N",
+        "url": "https://www.statistikdatabasen.scb.se/pxweb/en/ssd/START__FM__FM5001__FM5001B/RantaT04N/",
+        "usedFor": "Monthly average mortgage rates for new and outstanding loans by binding period.",
+    },
+    {
+        "id": "fi-gross-margin",
+        "label": "Finansinspektionen mortgage margin context",
+        "url": "https://www.fi.se/sv/for-konsumenter/lana/bankernas-bruttomarginal-pa-bolan/",
+        "usedFor": "External context for mortgage gross margins and bank funding-cost discussion.",
+    },
+]
+
 
 def rates_query(database: str, limit: int) -> str:
     return f"""
@@ -195,6 +222,7 @@ def main() -> None:
         "queryId": query_id,
         "negotiationSource": f"{database}.bank_vs_market_analysis",
         "negotiationQueryId": negotiation_query_id,
+        "sourceLinks": PUBLIC_SOURCE_LINKS,
         "rates": parse_rate_rows(rows),
         "negotiationOptions": parse_negotiation_rows(negotiation_rows),
     }
