@@ -55,8 +55,17 @@ export type ConfidenceLevel = "high" | "medium" | "low";
 export type DashboardState =
   | { value: "idle" }
   | { value: "loading" }
-  | { value: "ready"; snapshot: DashboardSnapshot }
-  | { value: "pipeline_inspection"; snapshot: DashboardSnapshot }
+  | { value: "ready_unselected"; snapshot: DashboardSnapshot }
+  | {
+      value: "duration_selected";
+      snapshot: DashboardSnapshot;
+      selectedPeriod: string;
+    }
+  | {
+      value: "pipeline_inspection";
+      snapshot: DashboardSnapshot;
+      selectedPeriod: string | null;
+    }
   | { value: "empty"; generatedAt: string }
   | { value: "stale"; snapshot: DashboardSnapshot; reason: string }
   | { value: "error"; message: string };
@@ -65,7 +74,7 @@ export type DashboardEvent =
   | { type: "START" }
   | { type: "LOAD_SUCCEEDED"; snapshot: DashboardSnapshot }
   | { type: "LOAD_FAILED"; message: string }
-  | { type: "MARK_STALE"; reason: string }
+  | { type: "SELECT_DURATION"; periodLabel: string }
   | { type: "VIEW_PIPELINE" }
   | { type: "CLOSE_PIPELINE" }
   | { type: "RETRY" };
@@ -79,7 +88,8 @@ const MAX_OUTGOING_TRANSITIONS_PER_STATE = 3;
 export const transitionMap = {
   idle: ["START"],
   loading: ["LOAD_FAILED", "LOAD_SUCCEEDED"],
-  ready: ["MARK_STALE", "RETRY", "VIEW_PIPELINE"],
+  ready_unselected: ["RETRY", "SELECT_DURATION", "VIEW_PIPELINE"],
+  duration_selected: ["RETRY", "SELECT_DURATION", "VIEW_PIPELINE"],
   pipeline_inspection: ["CLOSE_PIPELINE", "RETRY"],
   empty: ["RETRY"],
   stale: ["RETRY"],
@@ -199,23 +209,52 @@ export function transition(
             reason: staleReason,
           };
         }
-        return { value: "ready", snapshot: event.snapshot };
+        return { value: "ready_unselected", snapshot: event.snapshot };
       }
       return state;
 
-    case "ready":
-      if (event.type === "MARK_STALE") {
-        return { value: "stale", snapshot: state.snapshot, reason: event.reason };
+    case "ready_unselected":
+      if (event.type === "SELECT_DURATION") {
+        return {
+          value: "duration_selected",
+          snapshot: state.snapshot,
+          selectedPeriod: event.periodLabel,
+        };
       }
       if (event.type === "VIEW_PIPELINE") {
-        return { value: "pipeline_inspection", snapshot: state.snapshot };
+        return {
+          value: "pipeline_inspection",
+          snapshot: state.snapshot,
+          selectedPeriod: null,
+        };
+      }
+      if (event.type === "RETRY") return { value: "loading" };
+      return state;
+
+    case "duration_selected":
+      if (event.type === "SELECT_DURATION") {
+        return { ...state, selectedPeriod: event.periodLabel };
+      }
+      if (event.type === "VIEW_PIPELINE") {
+        return {
+          value: "pipeline_inspection",
+          snapshot: state.snapshot,
+          selectedPeriod: state.selectedPeriod,
+        };
       }
       if (event.type === "RETRY") return { value: "loading" };
       return state;
 
     case "pipeline_inspection":
       if (event.type === "CLOSE_PIPELINE") {
-        return { value: "ready", snapshot: state.snapshot };
+        if (state.selectedPeriod) {
+          return {
+            value: "duration_selected",
+            snapshot: state.snapshot,
+            selectedPeriod: state.selectedPeriod,
+          };
+        }
+        return { value: "ready_unselected", snapshot: state.snapshot };
       }
       if (event.type === "RETRY") return { value: "loading" };
       return state;

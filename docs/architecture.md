@@ -8,7 +8,7 @@ dbt prod/dev marts
   -> export_public_dashboard_data.py
   -> JSON snapshots in S3
   -> CloudFront
-  -> static React dashboard under /mortgages
+  -> static TypeScript state-machine dashboard under /mortgages
 ```
 
 Locale defaulting is first-party. The CloudFront Function returns
