@@ -20,7 +20,8 @@ cheap public-facing dashboard experience.
 - Dev and prod are separated by environment-prefixed AWS resources.
 
 See [docs/architecture.md](docs/architecture.md) and
-[docs/environments.md](docs/environments.md).
+[docs/environments.md](docs/environments.md). The UI lifecycle is defined in
+[docs/state-machine.md](docs/state-machine.md).
 
 ## Local Development
 

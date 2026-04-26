@@ -57,7 +57,9 @@ jobs:
     env:
       AWS_REGION: ${{ vars.AWS_REGION || 'eu-north-1' }}
       AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      VITE_BASE_PATH: ${{ vars.APP_BASE_PATH || '/mortgages/' }}
       STATIC_BUCKET: ${{ vars.STATIC_BUCKET }}
+      STATIC_PREFIX: ${{ vars.STATIC_PREFIX || 'mortgages' }}
       DATA_BUCKET: ${{ vars.DATA_BUCKET }}
       DATA_PREFIX: ${{ vars.DATA_PREFIX || 'public-dashboard' }}
       CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
@@ -102,8 +104,8 @@ jobs:
 
       - name: Upload static assets
         if: steps.preflight.outputs.deploy_ready == 'true'
-        run: aws s3 sync dist "s3://${STATIC_BUCKET}/mortgages/" --delete --cache-control "public,max-age=300"
+        run: aws s3 sync dist "s3://${STATIC_BUCKET}/${STATIC_PREFIX}/" --delete --cache-control "public,max-age=300"
 
       - name: Invalidate CloudFront
         if: steps.preflight.outputs.deploy_ready == 'true' && env.CLOUDFRONT_DISTRIBUTION_ID != ''
-        run: aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/mortgages/*"
+        run: aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/${STATIC_PREFIX}/*"

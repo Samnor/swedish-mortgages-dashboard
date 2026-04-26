@@ -56,6 +56,34 @@ p {
   line-height: 1.6;
 }
 
+.complexity-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.complexity-list div {
+  padding: 10px 12px;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.complexity-list dt {
+  color: #743a22;
+  font-family: "Courier New", monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.complexity-list dd {
+  margin: 2px 0 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
 .panel {
   display: grid;
   grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.6fr);
