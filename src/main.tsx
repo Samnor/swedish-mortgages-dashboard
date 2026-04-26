@@ -712,6 +712,8 @@ function App() {
 
       <FundingIntro labels={labels.fundingIntro} />
 
+      {kpis ? <KpiGrid kpis={kpis} labels={labels.rates} locale={locale} /> : null}
+
       {snapshot ? (
         <DurationFlow
           labels={labels.flow}
@@ -775,8 +777,6 @@ function App() {
           <div className="chart" />
         )}
       </section>
-
-      {kpis ? <KpiGrid kpis={kpis} labels={labels.rates} locale={locale} /> : null}
     </main>
   );
 }
