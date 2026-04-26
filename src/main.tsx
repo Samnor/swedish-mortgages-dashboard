@@ -120,6 +120,22 @@ const copy = {
         "Den här appen är också ett exempel på data engineering: råa publika källor modelleras i dbt, kontrolleras i CI och exporteras som en liten publik JSON-snapshot som är billig att serva.",
       cta: "Visa dbt-pipelinen",
       close: "Tillbaka till appen",
+      caseStudyTitle: "Data engineering-case: bolånedata som produkt",
+      caseStudyBody:
+        "Det här läget lämnar bolåneflödet och visar arkitekturen bakom produkten: lagerindelning, kvalitetsgrindar, publiceringskontrakt och hur en dyr analytisk backend görs om till en billig statisk dataprodukt.",
+      architectureLabel: "Pipeline-DAG",
+      controlsLabel: "Kontroller",
+      handoffLabel: "Produktkontrakt",
+      metrics: [
+        { label: "Publik runtime", value: "S3 + CloudFront" },
+        { label: "Appkontrakt", value: "latest.json" },
+        { label: "Lokal komplexitet", value: "max 3" },
+      ],
+      controls: [
+        "Källänkar måste följa med publika datapunkter.",
+        "Tidsserier måste vara sorterade innan appen bygger diagram.",
+        "Kvartiler och marginaler valideras innan snapshoten laddas upp.",
+      ],
       steps: [
         {
           title: "1. Rådata landar i data lake",
@@ -263,6 +279,22 @@ const copy = {
         "This app is also a data engineering case study: public raw sources are modeled in dbt, checked in CI and exported as a small public JSON snapshot that is cheap to serve.",
       cta: "Show the dbt pipeline",
       close: "Back to the app",
+      caseStudyTitle: "Data engineering case: mortgage data as a product",
+      caseStudyBody:
+        "This state leaves the mortgage flow and shows the product architecture behind it: layered modeling, quality gates, publishing contracts and how an expensive analytical backend becomes a cheap static data product.",
+      architectureLabel: "Pipeline DAG",
+      controlsLabel: "Controls",
+      handoffLabel: "Product contract",
+      metrics: [
+        { label: "Public runtime", value: "S3 + CloudFront" },
+        { label: "App contract", value: "latest.json" },
+        { label: "Local complexity", value: "max 3" },
+      ],
+      controls: [
+        "Source links must travel with public data points.",
+        "Time series must be sorted before the app renders charts.",
+        "Quantiles and margins are validated before the snapshot is uploaded.",
+      ],
       steps: [
         {
           title: "1. Raw data lands in the data lake",
@@ -384,6 +416,13 @@ type AppCopy = {
     body: string;
     cta: string;
     close: string;
+    caseStudyTitle: string;
+    caseStudyBody: string;
+    architectureLabel: string;
+    controlsLabel: string;
+    handoffLabel: string;
+    metrics: Array<{ label: string; value: string }>;
+    controls: string[];
     steps: Array<{ title: string; body: string }>;
   };
   fundingIntro: {
@@ -584,30 +623,74 @@ function FundingIntro({ labels }: { labels: AppCopy["fundingIntro"] }) {
 
 function PipelinePanel({
   labels,
+  snapshot,
   onClose,
 }: {
   labels: AppCopy["pipeline"];
+  snapshot: DashboardSnapshot;
   onClose: () => void;
 }) {
+  const exportedRows = snapshot.rates.length + snapshot.negotiationOptions.length;
+
   return (
-    <section className="pipeline-panel">
-      <div>
-        <p className="eyebrow">{labels.eyebrow}</p>
-        <h2>{labels.title}</h2>
-        <p>{labels.body}</p>
-        <button className="secondary-button" onClick={onClose} type="button">
-          {labels.close}
-        </button>
-      </div>
-      <div className="pipeline-steps">
-        {labels.steps.map((step) => (
-          <article className="pipeline-step" key={step.title}>
-            <strong>{step.title}</strong>
-            <span>{step.body}</span>
-          </article>
-        ))}
-      </div>
-    </section>
+    <main className="pipeline-screen">
+      <button className="secondary-button pipeline-back" onClick={onClose} type="button">
+        {labels.close}
+      </button>
+      <section className="pipeline-hero">
+        <div>
+          <p className="eyebrow">{labels.eyebrow}</p>
+          <h1>{labels.caseStudyTitle}</h1>
+          <p>{labels.caseStudyBody}</p>
+        </div>
+        <dl className="pipeline-metrics">
+          {labels.metrics.map((metric) => (
+            <div key={metric.label}>
+              <dt>{metric.label}</dt>
+              <dd>{metric.value}</dd>
+            </div>
+          ))}
+          <div>
+            <dt>{labels.handoffLabel}</dt>
+            <dd>{exportedRows} rows</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="pipeline-workbench" aria-label={labels.architectureLabel}>
+        <div className="pipeline-rail">
+          <p className="eyebrow">{labels.architectureLabel}</p>
+          <div className="pipeline-node raw">raw</div>
+          <div className="pipeline-arrow" />
+          <div className="pipeline-node stage">stg</div>
+          <div className="pipeline-arrow" />
+          <div className="pipeline-node mart">mart</div>
+          <div className="pipeline-arrow" />
+          <div className="pipeline-node publish">json</div>
+        </div>
+        <div className="pipeline-steps pipeline-steps-dag">
+          {labels.steps.map((step) => (
+            <article className="pipeline-step" key={step.title}>
+              <strong>{step.title}</strong>
+              <span>{step.body}</span>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="pipeline-contract">
+        <div>
+          <p className="eyebrow">{labels.controlsLabel}</p>
+          <h2>{labels.title}</h2>
+          <p>{labels.body}</p>
+        </div>
+        <ul>
+          {labels.controls.map((control) => (
+            <li key={control}>{control}</li>
+          ))}
+        </ul>
+      </section>
+    </main>
   );
 }
 
@@ -864,8 +947,16 @@ function App() {
   const selectedRange = selectedOption
     ? deriveNegotiationRange(selectedOption)
     : null;
-  const canInspectPipeline =
-    state.value === "ready" || state.value === "pipeline_inspection";
+
+  if (state.value === "pipeline_inspection") {
+    return (
+      <PipelinePanel
+        labels={labels.pipeline}
+        onClose={() => dispatch({ type: "CLOSE_PIPELINE" })}
+        snapshot={state.snapshot}
+      />
+    );
+  }
 
   return (
     <main>
@@ -919,18 +1010,11 @@ function App() {
         />
       ) : null}
 
-      {snapshot && canInspectPipeline ? (
-        state.value === "pipeline_inspection" ? (
-          <PipelinePanel
-            labels={labels.pipeline}
-            onClose={() => dispatch({ type: "CLOSE_PIPELINE" })}
-          />
-        ) : (
-          <PipelineTeaser
-            labels={labels.pipeline}
-            onOpen={() => dispatch({ type: "VIEW_PIPELINE" })}
-          />
-        )
+      {snapshot && state.value === "ready" ? (
+        <PipelineTeaser
+          labels={labels.pipeline}
+          onOpen={() => dispatch({ type: "VIEW_PIPELINE" })}
+        />
       ) : null}
 
       {snapshot ? (
