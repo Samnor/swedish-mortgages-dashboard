@@ -100,6 +100,29 @@ const copy = {
       empty: "Inga publika källänkar finns i denna snapshot.",
       usedFor: "Används för",
     },
+    fundingIntro: {
+      eyebrow: "Innan du väljer bindningstid",
+      title: "Så finansierar banken ditt bolån, förenklat",
+      body:
+        "När en bank lånar ut pengar till ett bolån använder den inte bara pengar som redan ligger på sparkonton. Banken lånar också själv på marknaden, ofta genom säkerställda obligationer där många bolån ligger som säkerhet. Din ränta behöver därför täcka bankens egen finansieringskostnad, kostnaden för risk och drift, samt bankens marginal.",
+      points: [
+        {
+          title: "Kort bindningstid följer marknadsräntan snabbare",
+          body:
+            "Rörliga och korta bolån påverkas mer direkt av styrräntan och korta marknadsräntor.",
+        },
+        {
+          title: "Längre bindningstid prissätts mer som längre upplåning",
+          body:
+            "Bundna bolån påverkas mer av obligationsräntor och vad investerare kräver för att låna ut pengar under flera år.",
+        },
+        {
+          title: "Förhandling handlar om marginalen",
+          body:
+            "Banken kan sällan trolla bort sin finansieringskostnad, men den kan ibland acceptera lägre marginal om du är en attraktiv kund.",
+        },
+      ],
+    },
   },
   en: {
     appLabel: "Swedish Mortgage Intelligence",
@@ -178,6 +201,29 @@ const copy = {
       empty: "No public source links are included in this snapshot.",
       usedFor: "Used for",
     },
+    fundingIntro: {
+      eyebrow: "Before you pick a binding period",
+      title: "How banks fund your mortgage, in plain language",
+      body:
+        "When a bank lends money for a mortgage, it does not only use money already sitting in savings accounts. The bank also borrows in financial markets, often through covered bonds backed by pools of mortgages. Your interest rate therefore has to cover the bank's own funding cost, risk and operating costs, plus the bank's margin.",
+      points: [
+        {
+          title: "Short binding periods move faster with market rates",
+          body:
+            "Variable and short mortgages are more directly affected by the policy rate and short market rates.",
+        },
+        {
+          title: "Longer binding periods are priced more like longer borrowing",
+          body:
+            "Fixed mortgages are affected more by bond yields and what investors demand to lend money for several years.",
+        },
+        {
+          title: "Negotiation is mostly about the margin",
+          body:
+            "The bank usually cannot remove its funding cost, but it may accept a lower margin if you are an attractive customer.",
+        },
+      ],
+    },
   },
 } satisfies Record<Locale, AppCopy>;
 
@@ -238,6 +284,12 @@ type AppCopy = {
     string
   >;
   sources: Record<"title" | "body" | "empty" | "usedFor", string>;
+  fundingIntro: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    points: Array<{ title: string; body: string }>;
+  };
 };
 
 function RatesPanel({
@@ -408,6 +460,26 @@ function SourceLinksPanel({
           ))}
         </div>
       ) : null}
+    </section>
+  );
+}
+
+function FundingIntro({ labels }: { labels: AppCopy["fundingIntro"] }) {
+  return (
+    <section className="funding-intro">
+      <div>
+        <p className="eyebrow">{labels.eyebrow}</p>
+        <h2>{labels.title}</h2>
+        <p>{labels.body}</p>
+      </div>
+      <div className="funding-points">
+        {labels.points.map((point) => (
+          <article className="funding-point" key={point.title}>
+            <strong>{point.title}</strong>
+            <span>{point.body}</span>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
@@ -637,6 +709,8 @@ function App() {
         <h1>{labels.heroTitle}</h1>
         <p>{labels.heroBody}</p>
       </section>
+
+      <FundingIntro labels={labels.fundingIntro} />
 
       {snapshot ? (
         <DurationFlow

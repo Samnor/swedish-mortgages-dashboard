@@ -239,6 +239,53 @@ code {
   font-weight: 700;
 }
 
+.funding-intro {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.45fr);
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 28px;
+  border: 1px solid rgba(23, 33, 31, 0.14);
+  border-radius: 34px;
+  background:
+    linear-gradient(135deg, rgba(255, 252, 244, 0.9), rgba(238, 224, 197, 0.82)),
+    radial-gradient(circle at 0% 100%, rgba(196, 109, 50, 0.12), transparent 18rem);
+  box-shadow: 0 24px 60px rgba(80, 63, 43, 0.1);
+}
+
+.funding-intro h2 {
+  max-width: 720px;
+}
+
+.funding-points {
+  display: grid;
+  gap: 10px;
+  align-content: center;
+}
+
+.funding-point {
+  padding: 16px;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.funding-point strong,
+.funding-point span {
+  display: block;
+}
+
+.funding-point strong {
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+.funding-point span {
+  color: #53615d;
+  font-size: 0.96rem;
+  line-height: 1.45;
+}
+
 .insight-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -387,6 +434,10 @@ code {
   }
 
   .flow-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .funding-intro {
     grid-template-columns: 1fr;
   }
 
