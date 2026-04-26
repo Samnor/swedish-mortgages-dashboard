@@ -54,6 +54,72 @@ function RatesPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
   return <ReactECharts option={chartOption} className="chart" />;
 }
 
+function InsightCharts({
+  options,
+  range,
+  snapshot,
+}: {
+  options: NegotiationOption[];
+  range: NegotiationRange;
+  snapshot: DashboardSnapshot;
+}) {
+  return (
+    <section className="insight-grid" aria-label="Mortgage negotiation charts">
+      <InsightChart
+        eyebrow="Chart 1"
+        title="Market pressure"
+        description="Policy rate and covered-bond funding context behind the negotiation."
+      >
+        <ReactECharts
+          option={marketPressureOption(snapshot, range)}
+          className="insight-chart"
+        />
+      </InsightChart>
+      <InsightChart
+        eyebrow="Chart 2"
+        title="Your duration against alternatives"
+        description="Median listed bank rates and target range across binding periods."
+      >
+        <ReactECharts
+          option={durationComparisonOption(options, range)}
+          className="insight-chart"
+        />
+      </InsightChart>
+      <InsightChart
+        eyebrow="Chart 3"
+        title="What you are haggling over"
+        description="Separates market funding proxy from the margin room implied by observed rates."
+      >
+        <ReactECharts
+          option={fundingMarginOption(range)}
+          className="insight-chart"
+        />
+      </InsightChart>
+    </section>
+  );
+}
+
+function InsightChart({
+  children,
+  description,
+  eyebrow,
+  title,
+}: {
+  children: React.ReactNode;
+  description: string;
+  eyebrow: string;
+  title: string;
+}) {
+  return (
+    <article className="insight-card">
+      <p className="eyebrow">{eyebrow}</p>
+      <h2>{title}</h2>
+      <p>{description}</p>
+      {children}
+    </article>
+  );
+}
+
 function KpiGrid({ kpis }: { kpis: DashboardKpis }) {
   return (
     <section className="kpi-grid" aria-label="Mortgage market summary">
@@ -75,19 +141,13 @@ function KpiGrid({ kpis }: { kpis: DashboardKpis }) {
 
 function DurationFlow({
   options,
-  selectedPeriod,
   onSelectPeriod,
+  range,
 }: {
   options: NegotiationOption[];
-  selectedPeriod: string | null;
   onSelectPeriod: (period: string) => void;
+  range: NegotiationRange | null;
 }) {
-  const selectedOption =
-    options.find((option) => option.periodLabel === selectedPeriod) ??
-    options[0] ??
-    null;
-  const range = selectedOption ? deriveNegotiationRange(selectedOption) : null;
-
   if (!range) {
     return (
       <section className="flow-panel">
@@ -224,6 +284,13 @@ function App() {
     state.value === "ready" || state.value === "stale" ? state.snapshot : null;
   const kpis = snapshot ? deriveDashboardKpis(snapshot) : null;
   const negotiationOptions = snapshot?.negotiationOptions ?? [];
+  const selectedOption =
+    negotiationOptions.find((option) => option.periodLabel === selectedPeriod) ??
+    negotiationOptions[0] ??
+    null;
+  const selectedRange = selectedOption
+    ? deriveNegotiationRange(selectedOption)
+    : null;
 
   return (
     <main>
@@ -240,7 +307,15 @@ function App() {
         <DurationFlow
           onSelectPeriod={setSelectedPeriod}
           options={negotiationOptions}
-          selectedPeriod={selectedPeriod}
+          range={selectedRange}
+        />
+      ) : null}
+
+      {snapshot && selectedRange ? (
+        <InsightCharts
+          options={negotiationOptions}
+          range={selectedRange}
+          snapshot={snapshot}
         />
       ) : null}
 
@@ -276,6 +351,137 @@ function App() {
       {kpis ? <KpiGrid kpis={kpis} /> : null}
     </main>
   );
+}
+
+function marketPressureOption(
+  snapshot: DashboardSnapshot,
+  range: NegotiationRange,
+) {
+  return {
+    animationDuration: 700,
+    grid: { left: 42, right: 20, top: 34, bottom: 34 },
+    legend: { top: 0 },
+    tooltip: { trigger: "axis" },
+    xAxis: {
+      type: "category",
+      data: snapshot.rates.map((row) => row.date),
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: { formatter: "{value}%" },
+    },
+    series: [
+      {
+        name: "Policy rate",
+        type: "line",
+        smooth: true,
+        data: snapshot.rates.map((row) => row.policyRate),
+      },
+      {
+        name: "5Y covered bond proxy",
+        type: "line",
+        smooth: true,
+        data: snapshot.rates.map((row) => row.mortgageBond5y),
+      },
+      {
+        name: `${range.option.periodLabelDisplay} target`,
+        type: "line",
+        symbol: "none",
+        lineStyle: { type: "dashed", width: 2 },
+        data: snapshot.rates.map(() => range.midpointRate),
+      },
+    ],
+  };
+}
+
+function durationComparisonOption(
+  options: NegotiationOption[],
+  range: NegotiationRange,
+) {
+  return {
+    animationDuration: 700,
+    grid: { left: 42, right: 20, top: 34, bottom: 34 },
+    legend: { top: 0 },
+    tooltip: { trigger: "axis" },
+    xAxis: {
+      type: "category",
+      data: options.map((option) => option.periodLabelDisplay),
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: { formatter: "{value}%" },
+    },
+    series: [
+      {
+        name: "Median listed",
+        type: "bar",
+        data: options.map((option) => option.medianListRate),
+      },
+      {
+        name: "Negotiation target",
+        type: "line",
+        smooth: true,
+        data: options.map((option) => deriveNegotiationRange(option).midpointRate),
+      },
+      {
+        name: "Selected",
+        type: "scatter",
+        symbolSize: 18,
+        data: options.map((option) =>
+          option.periodLabel === range.option.periodLabel
+            ? deriveNegotiationRange(option).midpointRate
+            : null,
+        ),
+      },
+    ],
+  };
+}
+
+function fundingMarginOption(range: NegotiationRange) {
+  const marginLow = range.floorRate - range.option.medianFundingCost;
+  const marginHigh = range.ceilingRate - range.option.medianFundingCost;
+
+  return {
+    animationDuration: 700,
+    grid: { left: 42, right: 20, top: 34, bottom: 34 },
+    legend: { top: 0 },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+    },
+    xAxis: {
+      type: "category",
+      data: ["Floor", "Target", "Ceiling", "Median listed"],
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: { formatter: "{value}%" },
+    },
+    series: [
+      {
+        name: "Funding proxy",
+        type: "bar",
+        stack: "rate",
+        data: [
+          range.option.medianFundingCost,
+          range.option.medianFundingCost,
+          range.option.medianFundingCost,
+          range.option.medianFundingCost,
+        ],
+      },
+      {
+        name: "Margin room",
+        type: "bar",
+        stack: "rate",
+        data: [
+          marginLow,
+          range.midpointRate - range.option.medianFundingCost,
+          marginHigh,
+          range.option.medianListRate - range.option.medianFundingCost,
+        ],
+      },
+    ],
+  };
 }
 
 function formatRate(value: number): string {
