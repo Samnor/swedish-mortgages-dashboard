@@ -27,15 +27,22 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       environment: ${{ steps.env.outputs.environment }}
+      source_environment: ${{ steps.env.outputs.source_environment }}
     steps:
       - id: env
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            DEPLOY_ENV="${{ inputs.environment }}"
+            SOURCE_ENV="${{ inputs.environment }}"
           else
-            DEPLOY_ENV="prod"
+            SOURCE_ENV="prod"
+          fi
+          if [ "$SOURCE_ENV" = "prod" ]; then
+            DEPLOY_ENV="prod-data"
+          else
+            DEPLOY_ENV="$SOURCE_ENV"
           fi
           echo "environment=$DEPLOY_ENV" >> "$GITHUB_OUTPUT"
+          echo "source_environment=$SOURCE_ENV" >> "$GITHUB_OUTPUT"
 
   refresh:
     needs: resolve
@@ -80,7 +87,7 @@ jobs:
         if: steps.preflight.outputs.refresh_ready == 'true'
         run: |
           python3 scripts/export_public_dashboard_data.py \
-            --environment "${{ needs.resolve.outputs.environment }}" \
+            --environment "${{ needs.resolve.outputs.source_environment }}" \
             --athena-output "$ATHENA_OUTPUT_LOCATION" \
             --workgroup "$ATHENA_WORKGROUP" \
             --output dist/data
