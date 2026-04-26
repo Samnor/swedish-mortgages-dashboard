@@ -30,6 +30,9 @@ The file should include:
 ```json
 {
   "generatedAt": "2026-04-26T00:00:00Z",
+  "environment": "prod",
+  "source": "swedish_mortgages_prod_marts.rates_daily",
+  "queryId": "athena-query-id",
   "rates": [
     {
       "date": "2026-04-26",
@@ -42,3 +45,6 @@ The file should include:
 
 More files can be added later, but the first pass should keep one snapshot so
 the state machine remains easy to reason about.
+
+The first exporter query is allowlisted to `rates_daily` and returns the latest
+90 rows where `policy_rate` and `mortbond_5y` are present.

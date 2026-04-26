@@ -62,6 +62,8 @@ jobs:
       STATIC_PREFIX: ${{ vars.STATIC_PREFIX || 'mortgages' }}
       DATA_BUCKET: ${{ vars.DATA_BUCKET }}
       DATA_PREFIX: ${{ vars.DATA_PREFIX || 'public-dashboard' }}
+      ATHENA_OUTPUT_LOCATION: ${{ vars.ATHENA_OUTPUT_LOCATION || 's3://athena-queries-funfun/dashboard-exports/' }}
+      ATHENA_WORKGROUP: ${{ vars.ATHENA_WORKGROUP || 'primary' }}
       CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
     steps:
       - name: Checkout
@@ -101,6 +103,15 @@ jobs:
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Export public dashboard data
+        if: steps.preflight.outputs.deploy_ready == 'true'
+        run: |
+          python3 scripts/export_public_dashboard_data.py \
+            --environment "${{ needs.resolve.outputs.environment }}" \
+            --athena-output "$ATHENA_OUTPUT_LOCATION" \
+            --workgroup "$ATHENA_WORKGROUP" \
+            --output dist/data
 
       - name: Upload static assets
         if: steps.preflight.outputs.deploy_ready == 'true'

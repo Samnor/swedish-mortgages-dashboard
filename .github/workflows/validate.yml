@@ -27,4 +27,6 @@ jobs:
         run: npm ci
 
       - name: Validate
-        run: npm run validate
+        run: |
+          npm run validate
+          python3 -m py_compile scripts/export_public_dashboard_data.py
