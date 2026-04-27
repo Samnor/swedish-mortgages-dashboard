@@ -27,6 +27,7 @@ type IconName =
   | "arrowLeft"
   | "bank"
   | "bond"
+  | "chart"
   | "check"
   | "clock"
   | "database"
@@ -100,7 +101,8 @@ type AppCopy = {
     | "howToReadBody"
     | "howToReadFloor"
     | "howToReadMidpoint"
-    | "howToReadCeiling",
+    | "howToReadCeiling"
+    | "dataBehindRange",
     string
   >;
   diagnostics: Record<
@@ -229,6 +231,7 @@ const copy = {
         "Mitten är den praktiska startpunkten att säga högt i samtalet.",
       howToReadCeiling:
         "Övre delen är fortfarande under medianen men mindre offensiv.",
+      dataBehindRange: "Data bakom intervallet",
     },
     diagnostics: {
       title: "Data- och appdiagnostik",
@@ -422,6 +425,7 @@ const copy = {
         "The midpoint is the practical opening target to say out loud.",
       howToReadCeiling:
         "The upper end is still below the median, but less ambitious.",
+      dataBehindRange: "Data behind this range",
     },
     diagnostics: {
       title: "Data and app diagnostics",
@@ -648,10 +652,24 @@ function renderApp(): string {
       }
       ${
         snapshot && selectedRange
-          ? renderInsightCharts(labels.charts, negotiationOptions, selectedRange, snapshot)
+          ? renderProgressiveSection(
+              labels.charts.aria,
+              renderInsightCharts(labels.charts, negotiationOptions, selectedRange, snapshot),
+              "evidence-section",
+              "chart",
+            )
           : ""
       }
-      ${snapshot && selectedRange ? renderLimitations(labels.limitations) : ""}
+      ${
+        snapshot && selectedRange
+          ? renderProgressiveSection(
+              labels.limitations.title,
+              renderLimitations(labels.limitations),
+              "limitations-section",
+              "shield",
+            )
+          : ""
+      }
       ${renderFundingIntro(labels.fundingIntro)}
       ${kpis && snapshot ? renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks) : ""}
       ${
@@ -847,13 +865,16 @@ function renderNegotiationRangePanel(
           ? `<p class="confidence-warning">${escapeHtml(labels.lowConfidenceNote)}</p>`
           : ""
       }
-      <dl class="range-details">
-        ${renderDetail(labels.medianListed, formatRate(range.option.medianListRate), bankRateSource)}
-        ${renderDetail(labels.fundingProxy, formatRate(range.option.medianFundingCost), fundingSource)}
-        ${renderDetail(labels.banksSampled, String(range.option.bankCount), bankRateSource)}
-        ${renderDetail(labels.confidence, confidenceLabel(labels, confidence), marginSource)}
-        ${renderDetail(latestDate ? labels.latestMarketDate : labels.latestMarketDate, latestDate ?? copy[locale].diagnostics.unavailable)}
-      </dl>
+      <details class="range-data">
+        <summary>${renderIcon("database")}${escapeHtml(labels.dataBehindRange)}</summary>
+        <dl class="range-details">
+          ${renderDetail(labels.medianListed, formatRate(range.option.medianListRate), bankRateSource)}
+          ${renderDetail(labels.fundingProxy, formatRate(range.option.medianFundingCost), fundingSource)}
+          ${renderDetail(labels.banksSampled, String(range.option.bankCount), bankRateSource)}
+          ${renderDetail(labels.confidence, confidenceLabel(labels, confidence), marginSource)}
+          ${renderDetail(latestDate ? labels.latestMarketDate : labels.latestMarketDate, latestDate ?? copy[locale].diagnostics.unavailable)}
+        </dl>
+      </details>
     </article>
   `;
 }
@@ -876,15 +897,15 @@ function prefersReducedMotion(): boolean {
 
 function renderRangeGuide(labels: AppCopy["flow"]): string {
   return `
-    <aside class="range-guide">
-      <strong>${renderIcon("target")}${escapeHtml(labels.howToReadTitle)}</strong>
+    <details class="range-guide">
+      <summary>${renderIcon("target")}${escapeHtml(labels.howToReadTitle)}</summary>
       <p>${escapeHtml(labels.howToReadBody)}</p>
       <ul>
         <li>${escapeHtml(labels.howToReadFloor)}</li>
         <li>${escapeHtml(labels.howToReadMidpoint)}</li>
         <li>${escapeHtml(labels.howToReadCeiling)}</li>
       </ul>
-    </aside>
+    </details>
   `;
 }
 
@@ -947,6 +968,8 @@ function renderIcon(name: IconName): string {
       '<path d="M3 9h18L12 4 3 9Z"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8M4 18h16M3 21h18"/>',
     bond:
       '<path d="M6 5h12v14H6z"/><path d="M8.5 9h7M8.5 12h7M8.5 15h4"/><path d="m15 5 3 3"/>',
+    chart:
+      '<path d="M4 19V5"/><path d="M4 19h16"/><path d="m7 15 3-4 3 2 4-7"/>',
     check:
       '<path d="M20 6 9 17l-5-5"/><path d="M4 19h16"/>',
     clock:
@@ -1039,6 +1062,20 @@ function renderLimitations(labels: AppCopy["limitations"]): string {
         ${labels.items.map((item) => `<li>${renderIcon("shield")}${escapeHtml(item)}</li>`).join("")}
       </ul>
     </section>
+  `;
+}
+
+function renderProgressiveSection(
+  summary: string,
+  body: string,
+  className: string,
+  icon: IconName,
+): string {
+  return `
+    <details class="progressive-section ${escapeAttr(className)}">
+      <summary>${renderIcon(icon)}${escapeHtml(summary)}</summary>
+      ${body}
+    </details>
   `;
 }
 

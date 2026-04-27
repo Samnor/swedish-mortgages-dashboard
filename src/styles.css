@@ -356,7 +356,8 @@ code {
   line-height: 1.45;
 }
 
-.range-guide {
+.range-guide,
+.range-data {
   margin: 14px 0 0;
   padding: 14px;
   border: 1px solid rgba(247, 197, 120, 0.24);
@@ -364,12 +365,41 @@ code {
   background: rgba(251, 244, 231, 0.07);
 }
 
-.range-guide strong {
+.range-guide summary,
+.range-data summary,
+.progressive-section summary {
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+  font-family: "Courier New", monospace;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.range-guide summary,
+.range-data summary {
   color: #f7c578;
   font-size: 1rem;
+}
+
+.range-guide summary::-webkit-details-marker,
+.range-data summary::-webkit-details-marker,
+.progressive-section summary::-webkit-details-marker {
+  display: none;
+}
+
+.range-guide summary::after,
+.range-data summary::after,
+.progressive-section summary::after {
+  margin-left: auto;
+  content: "+";
+}
+
+.range-guide[open] summary::after,
+.range-data[open] summary::after,
+.progressive-section[open] summary::after {
+  content: "-";
 }
 
 .range-guide p {
@@ -703,6 +733,33 @@ code {
   font-size: 0.84rem;
   font-weight: 700;
   text-decoration: none;
+}
+
+.progressive-section {
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid rgba(23, 33, 31, 0.14);
+  border-radius: 28px;
+  background: rgba(255, 252, 244, 0.78);
+  box-shadow: 0 18px 42px rgba(80, 63, 43, 0.08);
+}
+
+.progressive-section summary {
+  color: #743a22;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+}
+
+.progressive-section .insight-grid,
+.progressive-section .limitations-panel {
+  margin-top: 16px;
+  margin-bottom: 0;
+  box-shadow: none;
+}
+
+.progressive-section .limitations-panel {
+  padding: 18px;
+  border-radius: 22px;
 }
 
 .limitations-panel {
@@ -1148,6 +1205,10 @@ code {
   }
 
   .range-guide {
+    padding: 12px;
+  }
+
+  .range-data {
     padding: 12px;
   }
 
