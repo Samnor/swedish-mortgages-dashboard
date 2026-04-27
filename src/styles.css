@@ -204,6 +204,24 @@ code {
   height: 0.9em;
 }
 
+.source-kind {
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(23, 33, 31, 0.08);
+  color: #743a22;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.source-chip-method .source-kind {
+  color: #2d5f5d;
+}
+
+.source-chip-context .source-kind {
+  color: #875514;
+}
+
 .source-chip:hover,
 .source-chip:focus-visible {
   border-color: #743a22;
@@ -321,11 +339,49 @@ code {
   font-size: 0.66rem;
 }
 
+.range-details .source-kind {
+  background: rgba(251, 244, 231, 0.12);
+  color: #f7c578;
+}
+
 .assumption-note,
 .confidence-warning {
   margin: 12px 0 0;
   font-size: 0.95rem;
   line-height: 1.45;
+}
+
+.range-guide {
+  margin: 14px 0 0;
+  padding: 14px;
+  border: 1px solid rgba(247, 197, 120, 0.24);
+  border-radius: 18px;
+  background: rgba(251, 244, 231, 0.07);
+}
+
+.range-guide strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f7c578;
+  font-size: 1rem;
+}
+
+.range-guide p {
+  margin: 8px 0 0;
+  color: rgba(251, 244, 231, 0.82);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.range-guide ul {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: rgba(251, 244, 231, 0.86);
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .confidence-warning {
@@ -644,6 +700,48 @@ code {
   text-decoration: none;
 }
 
+.limitations-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.86fr) minmax(0, 1.14fr);
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 28px;
+  border: 1px solid rgba(23, 33, 31, 0.14);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(116, 58, 34, 0.12), transparent 18rem),
+    rgba(255, 252, 244, 0.82);
+  box-shadow: 0 20px 52px rgba(80, 63, 43, 0.09);
+}
+
+.limitations-panel ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.limitations-panel li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.46);
+  color: #17211f;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.limitations-panel li .icon {
+  width: 1.08em;
+  height: 1.08em;
+  margin-top: 0.15em;
+  color: #743a22;
+}
+
 .secondary-button {
   display: inline-flex;
   align-items: center;
@@ -844,6 +942,20 @@ code {
   font-size: 1.05rem;
 }
 
+.source-link-kind {
+  width: fit-content;
+  margin-bottom: 8px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(116, 58, 34, 0.1);
+  color: #743a22;
+  font-family: "Courier New", monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .source-link span {
   color: #53615d;
   font-size: 0.94rem;
@@ -930,6 +1042,10 @@ code {
   }
 
   .funding-intro {
+    grid-template-columns: 1fr;
+  }
+
+  .limitations-panel {
     grid-template-columns: 1fr;
   }
 

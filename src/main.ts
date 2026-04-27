@@ -22,6 +22,7 @@ const localeUrl = `${import.meta.env.BASE_URL}locale.json`;
 const localeStorageKey = "swedish-mortgages-dashboard.locale";
 
 type Locale = "sv" | "en";
+type SourceKind = "source" | "method" | "context";
 type IconName =
   | "arrowLeft"
   | "bank"
@@ -94,14 +95,28 @@ type AppCopy = {
     | "mediumConfidence"
     | "lowConfidence"
     | "lowConfidenceNote"
-    | "assumptionNote",
+    | "assumptionNote"
+    | "howToReadTitle"
+    | "howToReadBody"
+    | "howToReadFloor"
+    | "howToReadMidpoint"
+    | "howToReadCeiling",
     string
   >;
   diagnostics: Record<
     "title" | "state" | "reads" | "complexity" | "empty" | "unavailable",
     string
   >;
-  sources: Record<"title" | "body" | "empty" | "usedFor", string>;
+  sources: Record<
+    | "title"
+    | "body"
+    | "empty"
+    | "usedFor"
+    | "source"
+    | "method"
+    | "context",
+    string
+  >;
   pipeline: {
     eyebrow: string;
     title: string;
@@ -123,6 +138,12 @@ type AppCopy = {
     title: string;
     body: string;
     points: Array<{ title: string; body: string }>;
+  };
+  limitations: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    items: string[];
   };
 };
 
@@ -199,6 +220,15 @@ const copy = {
         "Få banker i urvalet. Använd intervallet som grov signal, inte som stark marknadsnivå.",
       assumptionNote:
         "Bygger på listräntor, säkerställda obligationsproxys och en enkel marginalmodell. Faktiska kundrabatter kan avvika.",
+      howToReadTitle: "Så läser du intervallet",
+      howToReadBody:
+        "Intervallet är ett samtalsverktyg, inte ett kreditbeslut. Det kombinerar bankernas publicerade listräntor med en marknadsproxy för finansieringskostnad.",
+      howToReadFloor:
+        "Nedre delen är aggressiv och bör ses som ett starkt förhandlingsankare.",
+      howToReadMidpoint:
+        "Mitten är den praktiska startpunkten att säga högt i samtalet.",
+      howToReadCeiling:
+        "Övre delen är fortfarande under medianen men mindre offensiv.",
     },
     diagnostics: {
       title: "Data- och appdiagnostik",
@@ -215,6 +245,9 @@ const copy = {
         "Länkarna går till de publika källor och referenser som används för räntor, bankjämförelser och marginalkontext.",
       empty: "Inga publika källänkar finns i denna snapshot.",
       usedFor: "Används för",
+      source: "Källa",
+      method: "Metod",
+      context: "Kontext",
     },
     pipeline: {
       eyebrow: "Under huven",
@@ -225,7 +258,7 @@ const copy = {
       close: "Tillbaka till appen",
       caseStudyTitle: "Data engineering-case: bolånedata som produkt",
       caseStudyBody:
-        "Det här läget lämnar bolåneflödet och visar arkitekturen bakom produkten: lagerindelning, kvalitetsgrindar, publiceringskontrakt och hur en dyr analytisk backend görs om till en billig statisk dataprodukt.",
+        "Det här läget lämnar bolåneflödet och visar arkitekturen bakom produkten: råa publika källor blir staging-modeller, mart-tabeller, validerade kontrakt och till slut en billig statisk dataprodukt.",
       architectureLabel: "Pipeline-DAG",
       controlsLabel: "Kontroller",
       handoffLabel: "Produktkontrakt",
@@ -253,23 +286,35 @@ const copy = {
         {
           title: "1. Rådata landar i data lake",
           body:
-            "Riksbankens räntor, SCB-data och bankernas publicerade listräntor samlas i separata råtabeller.",
+            "Riksbankens räntor, SCB-data och bankernas publicerade listräntor landar oförändrade i separata råtabeller med tydlig källseparation.",
         },
         {
           title: "2. dbt städar och modellerar",
           body:
-            "Staging-modeller typkonverterar och deduplicerar. Mart-modeller bygger räntedag, bankjämförelser och finansieringsproxy.",
+            "Staging-modeller typkonverterar, deduplicerar och normaliserar namn. Mart-modeller bygger räntedag, bankjämförelser och finansieringsproxy.",
         },
         {
           title: "3. CI och kontrakt skyddar appen",
           body:
-            "Validatorn kräver sorterade tidsserier, rimliga kvartiler, källänkar och icke-tomma förhandlingsalternativ.",
+            "Validatorn kräver sorterade tidsserier, rimliga kvartiler, källänkar och icke-tomma förhandlingsalternativ innan något publiceras.",
         },
         {
           title: "4. Appen får bara en kuraterad snapshot",
           body:
-            "Publika användare frågar aldrig Athena. GitHub Actions exporterar en kompakt JSON-fil till S3 och CloudFront.",
+            "Publika användare frågar aldrig Athena. GitHub Actions exporterar en kompakt JSON-fil till S3 och CloudFront, så appen är snabb och billig.",
         },
+      ],
+    },
+    limitations: {
+      eyebrow: "Viktigt att veta",
+      title: "Det här vet inte appen om dig",
+      body:
+        "Appen visar marknadsläge och förhandlingsutrymme. Den ersätter inte bankens kreditprövning och känner inte till din personliga riskprofil.",
+      items: [
+        "Belåningsgrad, inkomst, amorteringskrav och övriga lån.",
+        "Din relation till banken, sparande, försäkringar och historik.",
+        "Tillfälliga kampanjer, manuella undantag och bankens interna riskpris.",
+        "Om du prioriterar lägsta möjliga ränta eller stabilitet över tid.",
       ],
     },
     fundingIntro: {
@@ -368,6 +413,15 @@ const copy = {
         "Few banks in the sample. Use the range as a rough signal, not a strong market level.",
       assumptionNote:
         "Based on listed rates, covered-bond proxies and a simple margin model. Actual customer discounts can differ.",
+      howToReadTitle: "How to read the range",
+      howToReadBody:
+        "The range is a conversation tool, not a credit decision. It combines published bank list rates with a market proxy for funding cost.",
+      howToReadFloor:
+        "The lower end is aggressive and works best as a strong negotiation anchor.",
+      howToReadMidpoint:
+        "The midpoint is the practical opening target to say out loud.",
+      howToReadCeiling:
+        "The upper end is still below the median, but less ambitious.",
     },
     diagnostics: {
       title: "Data and app diagnostics",
@@ -384,6 +438,9 @@ const copy = {
         "These links point to the public sources and references used for rates, bank comparisons and margin context.",
       empty: "No public source links are included in this snapshot.",
       usedFor: "Used for",
+      source: "Source",
+      method: "Method",
+      context: "Context",
     },
     pipeline: {
       eyebrow: "Under the hood",
@@ -394,7 +451,7 @@ const copy = {
       close: "Back to the app",
       caseStudyTitle: "Data engineering case: mortgage data as a product",
       caseStudyBody:
-        "This state leaves the mortgage flow and shows the product architecture behind it: layered modeling, quality gates, publishing contracts and how an expensive analytical backend becomes a cheap static data product.",
+        "This state leaves the mortgage flow and shows the product architecture behind it: public raw sources become staging models, mart tables, validated contracts and finally a cheap static data product.",
       architectureLabel: "Pipeline DAG",
       controlsLabel: "Controls",
       handoffLabel: "Product contract",
@@ -422,23 +479,35 @@ const copy = {
         {
           title: "1. Raw data lands in the data lake",
           body:
-            "Riksbank rates, SCB data and bank published list rates land in separate raw tables.",
+            "Riksbank rates, SCB data and bank published list rates land unchanged in separate raw tables with clear source separation.",
         },
         {
           title: "2. dbt cleans and models",
           body:
-            "Staging models type and deduplicate data. Mart models produce daily rates, bank comparisons and funding proxies.",
+            "Staging models type, deduplicate and normalize names. Mart models produce daily rates, bank comparisons and funding proxies.",
         },
         {
           title: "3. CI and contracts protect the app",
           body:
-            "The validator requires sorted time series, ordered quantiles, source links and non-empty negotiation options.",
+            "The validator requires sorted time series, ordered quantiles, source links and non-empty negotiation options before anything is published.",
         },
         {
           title: "4. The app gets only a curated snapshot",
           body:
-            "Public users never query Athena. GitHub Actions exports compact JSON to S3 and CloudFront.",
+            "Public users never query Athena. GitHub Actions exports compact JSON to S3 and CloudFront, keeping the app fast and cheap.",
         },
+      ],
+    },
+    limitations: {
+      eyebrow: "Important caveat",
+      title: "What this app does not know about you",
+      body:
+        "The app shows market context and negotiation room. It does not replace a lender's credit decision and does not know your personal risk profile.",
+      items: [
+        "Loan-to-value, income, amortization requirements and other debt.",
+        "Your relationship with the bank, savings, insurance and history.",
+        "Temporary campaigns, manual exceptions and the bank's internal risk price.",
+        "Whether you value the lowest possible rate or stability over time.",
       ],
     },
     fundingIntro: {
@@ -583,6 +652,7 @@ function renderApp(): string {
           ? renderInsightCharts(labels.charts, negotiationOptions, selectedRange, snapshot)
           : ""
       }
+      ${snapshot && selectedRange ? renderLimitations(labels.limitations) : ""}
       ${
         snapshot &&
         (state.value === "ready_unselected" || state.value === "duration_selected")
@@ -770,6 +840,7 @@ function renderNegotiationRangePanel(
         ${escapeHtml(labels.rangeBodyEnd)}
       </p>
       <p class="assumption-note">${escapeHtml(labels.assumptionNote)}</p>
+      ${renderRangeGuide(labels)}
       ${
         confidence === "low"
           ? `<p class="confidence-warning">${escapeHtml(labels.lowConfidenceNote)}</p>`
@@ -783,6 +854,20 @@ function renderNegotiationRangePanel(
         ${renderDetail(latestDate ? labels.latestMarketDate : labels.latestMarketDate, latestDate ?? copy[locale].diagnostics.unavailable)}
       </dl>
     </article>
+  `;
+}
+
+function renderRangeGuide(labels: AppCopy["flow"]): string {
+  return `
+    <aside class="range-guide">
+      <strong>${renderIcon("target")}${escapeHtml(labels.howToReadTitle)}</strong>
+      <p>${escapeHtml(labels.howToReadBody)}</p>
+      <ul>
+        <li>${escapeHtml(labels.howToReadFloor)}</li>
+        <li>${escapeHtml(labels.howToReadMidpoint)}</li>
+        <li>${escapeHtml(labels.howToReadCeiling)}</li>
+      </ul>
+    </aside>
   `;
 }
 
@@ -805,18 +890,30 @@ function sourceById(sources: SourceLink[], id: string): SourceLink | null {
 }
 
 function renderSourceChip(source: SourceLink): string {
+  const kind = sourceKind(source);
   return `
     <a
-      class="source-chip"
+      class="source-chip source-chip-${kind}"
       href="${escapeAttr(source.url)}"
       rel="noreferrer"
       target="_blank"
       title="${escapeAttr(source.usedFor)}"
     >
       ${renderIcon("external")}
+      <span class="source-kind">${escapeHtml(sourceKindLabel(kind, copy[locale].sources))}</span>
       ${escapeHtml(source.label)}
     </a>
   `;
+}
+
+function sourceKind(source: SourceLink): SourceKind {
+  if (source.id.includes("fi-")) return "context";
+  if (source.id.includes("scb-")) return "method";
+  return "source";
+}
+
+function sourceKindLabel(kind: SourceKind, labels: AppCopy["sources"]): string {
+  return labels[kind];
 }
 
 function fundingPointIcon(index: number): IconName {
@@ -913,6 +1010,21 @@ function renderPipelineTeaser(labels: AppCopy["pipeline"]): string {
   `;
 }
 
+function renderLimitations(labels: AppCopy["limitations"]): string {
+  return `
+    <section class="limitations-panel">
+      <div>
+        <p class="eyebrow">${escapeHtml(labels.eyebrow)}</p>
+        <h2>${escapeHtml(labels.title)}</h2>
+        <p>${escapeHtml(labels.body)}</p>
+      </div>
+      <ul>
+        ${labels.items.map((item) => `<li>${renderIcon("shield")}${escapeHtml(item)}</li>`).join("")}
+      </ul>
+    </section>
+  `;
+}
+
 function renderPipelineScreen(
   labels: AppCopy["pipeline"],
   snapshot: DashboardSnapshot,
@@ -1000,9 +1112,11 @@ function renderSourceLinksPanel(
 }
 
 function renderSourceLink(labels: AppCopy["sources"], source: SourceLink): string {
+  const kind = sourceKind(source);
   return `
     <a class="source-link" href="${escapeAttr(source.url)}" rel="noreferrer" target="_blank">
       <strong>${renderIcon("external")}${escapeHtml(source.label)}</strong>
+      <span class="source-link-kind">${escapeHtml(sourceKindLabel(kind, labels))}</span>
       <span>${escapeHtml(labels.usedFor)}: ${escapeHtml(source.usedFor)}</span>
     </a>
   `;
