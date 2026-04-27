@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "validate": "node scripts/validate_public_snapshot.mjs && tsc --noEmit && vite build"
+    "test:machine": "node --test --experimental-transform-types tests/stateMachine.test.ts",
+    "validate": "node scripts/validate_public_snapshot.mjs && npm run test:machine && tsc --noEmit && vite build"
   },
   "dependencies": {
     "typescript": "^5.9.3",

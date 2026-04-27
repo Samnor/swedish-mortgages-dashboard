@@ -215,6 +215,9 @@ export function transition(
 
     case "ready_unselected":
       if (event.type === "SELECT_DURATION") {
+        if (!hasNegotiationPeriod(state.snapshot, event.periodLabel)) {
+          return state;
+        }
         return {
           value: "duration_selected",
           snapshot: state.snapshot,
@@ -233,6 +236,9 @@ export function transition(
 
     case "duration_selected":
       if (event.type === "SELECT_DURATION") {
+        if (!hasNegotiationPeriod(state.snapshot, event.periodLabel)) {
+          return state;
+        }
         return { ...state, selectedPeriod: event.periodLabel };
       }
       if (event.type === "VIEW_PIPELINE") {
@@ -265,6 +271,15 @@ export function transition(
       if (event.type === "RETRY") return { value: "loading" };
       return state;
   }
+}
+
+function hasNegotiationPeriod(
+  snapshot: DashboardSnapshot,
+  periodLabel: string,
+): boolean {
+  return snapshot.negotiationOptions.some(
+    (option) => option.periodLabel === periodLabel,
+  );
 }
 
 function parseRatePoint(input: unknown): RatePoint {
