@@ -22,6 +22,18 @@ const localeUrl = `${import.meta.env.BASE_URL}locale.json`;
 const localeStorageKey = "swedish-mortgages-dashboard.locale";
 
 type Locale = "sv" | "en";
+type IconName =
+  | "arrowLeft"
+  | "bank"
+  | "bond"
+  | "check"
+  | "clock"
+  | "database"
+  | "external"
+  | "github"
+  | "pipeline"
+  | "shield"
+  | "target";
 
 type AppCopy = {
   appLabel: string;
@@ -616,9 +628,9 @@ function renderFundingIntro(labels: AppCopy["fundingIntro"]): string {
       <div class="funding-points">
         ${labels.points
           .map(
-            (point) => `
+            (point, index) => `
               <article class="funding-point">
-                <strong>${escapeHtml(point.title)}</strong>
+                <strong>${renderIcon(fundingPointIcon(index))}${escapeHtml(point.title)}</strong>
                 <span>${escapeHtml(point.body)}</span>
               </article>
             `,
@@ -643,6 +655,7 @@ function renderKpiGrid(
         kpis.policyRateChange30d,
         labels.vs30dAgo,
         sourceById(sources, "riksbank-swea"),
+        "bank",
       )}
       ${renderKpiCard(
         labels.mortgageBond5y,
@@ -651,6 +664,7 @@ function renderKpiGrid(
         kpis.mortgageBond5yChange30d,
         labels.vs30dAgo,
         sourceById(sources, "riksbank-swea"),
+        "bond",
       )}
     </section>
   `;
@@ -663,10 +677,11 @@ function renderKpiCard(
   delta: number | null,
   vsLabel: string,
   source: SourceLink | null,
+  icon: IconName,
 ): string {
   return `
     <article class="kpi-card">
-      <p class="eyebrow">${escapeHtml(label)}</p>
+      <p class="eyebrow icon-label">${renderIcon(icon)}${escapeHtml(label)}</p>
       <strong>${escapeHtml(value)}</strong>
       <span>${escapeHtml(detail)}</span>
       <span class="delta">${escapeHtml(formatDelta(delta))} ${escapeHtml(vsLabel)}</span>
@@ -709,6 +724,7 @@ function renderDurationFlow(
                   data-period="${escapeAttr(option.periodLabel)}"
                   type="button"
                 >
+                  ${renderIcon("clock")}
                   ${escapeHtml(option.periodLabelDisplay)}
                 </button>
               `,
@@ -744,7 +760,7 @@ function renderNegotiationRangePanel(
   return `
     <article class="range-card">
       <p class="eyebrow">${escapeHtml(labels.step2)}</p>
-      <h2>${escapeHtml(range.option.periodLabelDisplay)} ${escapeHtml(labels.negotiationRange)}</h2>
+      <h2><span class="heading-icon">${renderIcon("target")}</span>${escapeHtml(range.option.periodLabelDisplay)} ${escapeHtml(labels.negotiationRange)}</h2>
       <div class="range-value">${escapeHtml(formatRate(range.floorRate))}-${escapeHtml(formatRate(range.ceilingRate))}</div>
       <p>
         ${escapeHtml(labels.rangeBodyStart)}
@@ -797,9 +813,45 @@ function renderSourceChip(source: SourceLink): string {
       target="_blank"
       title="${escapeAttr(source.usedFor)}"
     >
+      ${renderIcon("external")}
       ${escapeHtml(source.label)}
     </a>
   `;
+}
+
+function fundingPointIcon(index: number): IconName {
+  if (index === 0) return "clock";
+  if (index === 1) return "bond";
+  return "target";
+}
+
+function renderIcon(name: IconName): string {
+  const paths: Record<IconName, string> = {
+    arrowLeft:
+      '<path d="M19 12H5"/><path d="m12 5-7 7 7 7"/>',
+    bank:
+      '<path d="M3 9h18L12 4 3 9Z"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8M4 18h16M3 21h18"/>',
+    bond:
+      '<path d="M6 5h12v14H6z"/><path d="M8.5 9h7M8.5 12h7M8.5 15h4"/><path d="m15 5 3 3"/>',
+    check:
+      '<path d="M20 6 9 17l-5-5"/><path d="M4 19h16"/>',
+    clock:
+      '<circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/>',
+    database:
+      '<ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5"/><path d="M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+    external:
+      '<path d="M14 4h6v6"/><path d="m10 14 10-10"/><path d="M18 13v6H5V6h6"/>',
+    github:
+      '<path d="M12 3a9 9 0 0 0-3 17c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .8.1-.7.4-1.1.7-1.3-2.2-.3-4.6-1.1-4.6-5A3.9 3.9 0 0 1 7 6.4c-.1-.3-.4-1.3.1-2.6 0 0 .9-.3 2.8 1a9.7 9.7 0 0 1 5.1 0c1.9-1.3 2.8-1 2.8-1 .5 1.3.2 2.3.1 2.6a3.9 3.9 0 0 1 1 2.7c0 3.9-2.4 4.7-4.6 5 .4.3.7 1 .7 2v3.4c0 .3.2.6.8.5A9 9 0 0 0 12 3Z"/>',
+    pipeline:
+      '<path d="M4 7h6v6H4zM14 11h6v6h-6z"/><path d="M10 10h2.5c.8 0 1.5.7 1.5 1.5V14"/>',
+    shield:
+      '<path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/>',
+    target:
+      '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
+  };
+
+  return `<svg class="icon icon-${name}" aria-hidden="true" viewBox="0 0 24 24">${paths[name]}</svg>`;
 }
 
 function renderInsightCharts(
@@ -856,7 +908,7 @@ function renderPipelineTeaser(labels: AppCopy["pipeline"]): string {
         <h2>${escapeHtml(labels.title)}</h2>
         <p>${escapeHtml(labels.body)}</p>
       </div>
-      <button class="secondary-button" data-action="view-pipeline" type="button">${escapeHtml(labels.cta)}</button>
+      <button class="secondary-button" data-action="view-pipeline" type="button">${renderIcon("pipeline")}${escapeHtml(labels.cta)}</button>
     </section>
   `;
 }
@@ -868,7 +920,7 @@ function renderPipelineScreen(
   const exportedRows = snapshot.rates.length + snapshot.negotiationOptions.length;
   return `
     <main class="pipeline-screen">
-      <button class="secondary-button pipeline-back" data-action="close-pipeline" type="button">${escapeHtml(labels.close)}</button>
+      <button class="secondary-button pipeline-back" data-action="close-pipeline" type="button">${renderIcon("arrowLeft")}${escapeHtml(labels.close)}</button>
       <section class="pipeline-hero">
         <div>
           <p class="eyebrow">${escapeHtml(labels.eyebrow)}</p>
@@ -885,13 +937,13 @@ function renderPipelineScreen(
       <section class="pipeline-workbench" aria-label="${escapeAttr(labels.architectureLabel)}">
         <div class="pipeline-rail">
           <p class="eyebrow">${escapeHtml(labels.architectureLabel)}</p>
-          <div class="pipeline-node raw">raw</div>
+          <div class="pipeline-node raw">${renderIcon("database")}raw</div>
           <div class="pipeline-arrow"></div>
-          <div class="pipeline-node stage">stg</div>
+          <div class="pipeline-node stage">${renderIcon("pipeline")}stg</div>
           <div class="pipeline-arrow"></div>
-          <div class="pipeline-node mart">mart</div>
+          <div class="pipeline-node mart">${renderIcon("check")}mart</div>
           <div class="pipeline-arrow"></div>
-          <div class="pipeline-node publish">json</div>
+          <div class="pipeline-node publish">${renderIcon("external")}json</div>
         </div>
         <div class="pipeline-steps pipeline-steps-dag">
           ${labels.steps
@@ -913,13 +965,13 @@ function renderPipelineScreen(
           <p>${escapeHtml(labels.body)}</p>
         </div>
         <ul>
-          ${labels.controls.map((control) => `<li>${escapeHtml(control)}</li>`).join("")}
+          ${labels.controls.map((control) => `<li>${renderIcon("shield")}${escapeHtml(control)}</li>`).join("")}
         </ul>
         <div class="pipeline-github-links">
           ${labels.githubLinks
             .map(
               (link) =>
-                `<a href="${escapeAttr(link.url)}" rel="noreferrer" target="_blank">${escapeHtml(link.label)}</a>`,
+                `<a href="${escapeAttr(link.url)}" rel="noreferrer" target="_blank">${renderIcon("github")}${escapeHtml(link.label)}</a>`,
             )
             .join("")}
         </div>
@@ -950,7 +1002,7 @@ function renderSourceLinksPanel(
 function renderSourceLink(labels: AppCopy["sources"], source: SourceLink): string {
   return `
     <a class="source-link" href="${escapeAttr(source.url)}" rel="noreferrer" target="_blank">
-      <strong>${escapeHtml(source.label)}</strong>
+      <strong>${renderIcon("external")}${escapeHtml(source.label)}</strong>
       <span>${escapeHtml(labels.usedFor)}: ${escapeHtml(source.usedFor)}</span>
     </a>
   `;

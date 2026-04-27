@@ -102,6 +102,35 @@ code {
   font-size: 0.9em;
 }
 
+.icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  vertical-align: -0.14em;
+}
+
+.icon-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.heading-icon {
+  display: inline-grid;
+  width: 0.94em;
+  height: 0.94em;
+  margin-right: 0.2em;
+  place-items: center;
+  color: #f7c578;
+  vertical-align: -0.08em;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -149,6 +178,8 @@ code {
 
 .source-chip {
   display: inline-flex;
+  align-items: center;
+  gap: 5px;
   width: fit-content;
   max-width: 100%;
   margin-top: 10px;
@@ -166,6 +197,11 @@ code {
   text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.source-chip .icon {
+  width: 0.9em;
+  height: 0.9em;
 }
 
 .source-chip:hover,
@@ -196,6 +232,10 @@ code {
 }
 
 .duration-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   min-width: 72px;
   padding: 13px 16px;
   border: 1px solid rgba(23, 33, 31, 0.18);
@@ -332,8 +372,17 @@ code {
 }
 
 .funding-point strong {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   margin-bottom: 8px;
   font-size: 1.05rem;
+}
+
+.funding-point .icon {
+  width: 1.1em;
+  height: 1.1em;
+  color: #743a22;
 }
 
 .funding-point span {
@@ -454,9 +503,11 @@ code {
 }
 
 .pipeline-node {
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-height: 64px;
-  place-items: center;
   border-radius: 18px;
   color: #17211f;
   font-family: "Courier New", monospace;
@@ -479,6 +530,11 @@ code {
 
 .pipeline-node.publish {
   background: #fff7e9;
+}
+
+.pipeline-node .icon {
+  width: 1.15em;
+  height: 1.15em;
 }
 
 .pipeline-arrow {
@@ -547,6 +603,9 @@ code {
 }
 
 .pipeline-contract li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   padding: 16px;
   border: 1px solid rgba(23, 33, 31, 0.12);
   border-radius: 18px;
@@ -554,6 +613,13 @@ code {
   color: #17211f;
   font-weight: 700;
   line-height: 1.45;
+}
+
+.pipeline-contract li .icon {
+  width: 1.1em;
+  height: 1.1em;
+  margin-top: 0.15em;
+  color: #2d5f5d;
 }
 
 .pipeline-github-links {
@@ -564,6 +630,9 @@ code {
 }
 
 .pipeline-github-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px 14px;
   border: 1px solid rgba(23, 33, 31, 0.18);
   border-radius: 999px;
@@ -576,6 +645,10 @@ code {
 }
 
 .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: fit-content;
   padding: 13px 16px;
   border: 1px solid rgba(23, 33, 31, 0.18);
@@ -764,6 +837,9 @@ code {
 }
 
 .source-link strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
   font-size: 1.05rem;
 }
