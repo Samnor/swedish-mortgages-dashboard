@@ -273,12 +273,17 @@ code {
 }
 
 .range-card {
+  scroll-margin-top: 12px;
   padding: 24px;
   border-radius: 28px;
   background:
     linear-gradient(145deg, #18221f, #334138),
     radial-gradient(circle at 100% 0%, rgba(247, 197, 120, 0.22), transparent 12rem);
   color: #fbf4e7;
+}
+
+.range-card:focus {
+  outline: none;
 }
 
 .range-card h2,
@@ -1080,6 +1085,80 @@ code {
 }
 
 @media (max-width: 520px) {
+  main {
+    width: min(100% - 24px, 1120px);
+    padding: 28px 0;
+  }
+
+  .language-toggle {
+    margin-bottom: 24px;
+  }
+
+  .hero {
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-size: clamp(2.55rem, 13vw, 4rem);
+    letter-spacing: -0.06em;
+  }
+
+  h2 {
+    font-size: clamp(1.75rem, 9vw, 2.5rem);
+  }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.52;
+  }
+
+  .flow-panel,
+  .funding-intro,
+  .pipeline-teaser,
+  .pipeline-panel,
+  .pipeline-hero,
+  .pipeline-workbench,
+  .pipeline-contract,
+  .limitations-panel,
+  .source-panel,
+  .panel {
+    padding: 18px 14px;
+    border-radius: 24px;
+  }
+
+  .range-card,
+  .kpi-card {
+    padding: 18px 14px;
+    border-radius: 22px;
+  }
+
+  .range-value {
+    font-size: clamp(2.55rem, 14vw, 4rem);
+  }
+
+  .duration-options {
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .duration-button {
+    min-width: 64px;
+    min-height: 44px;
+    padding: 11px 13px;
+  }
+
+  .range-guide {
+    padding: 12px;
+  }
+
+  .range-details div,
+  .limitations-panel li,
+  .funding-point,
+  .pipeline-step,
+  .source-link {
+    padding: 12px;
+  }
+
   .insight-card {
     padding: 18px 14px;
     border-radius: 22px;

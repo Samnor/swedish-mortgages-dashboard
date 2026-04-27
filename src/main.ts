@@ -562,6 +562,7 @@ appRoot.addEventListener("click", (event) => {
 
   if (action === "select-duration" && button.dataset.period) {
     send({ type: "SELECT_DURATION", periodLabel: button.dataset.period });
+    scrollRangeResultIntoView();
   }
   if (action === "view-pipeline") send({ type: "VIEW_PIPELINE" });
   if (action === "close-pipeline") send({ type: "CLOSE_PIPELINE" });
@@ -634,8 +635,6 @@ function renderApp(): string {
         <h1>${escapeHtml(labels.heroTitle)}</h1>
         <p>${escapeHtml(labels.heroBody)}</p>
       </section>
-      ${renderFundingIntro(labels.fundingIntro)}
-      ${kpis && snapshot ? renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks) : ""}
       ${
         snapshot
           ? renderDurationFlow(
@@ -653,6 +652,8 @@ function renderApp(): string {
           : ""
       }
       ${snapshot && selectedRange ? renderLimitations(labels.limitations) : ""}
+      ${renderFundingIntro(labels.fundingIntro)}
+      ${kpis && snapshot ? renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks) : ""}
       ${
         snapshot &&
         (state.value === "ready_unselected" || state.value === "duration_selected")
@@ -828,7 +829,7 @@ function renderNegotiationRangePanel(
   const fundingSource = sourceById(sources, "riksbank-swea");
   const marginSource = sourceById(sources, "fi-gross-margin");
   return `
-    <article class="range-card">
+    <article class="range-card" data-range-result tabindex="-1">
       <p class="eyebrow">${escapeHtml(labels.step2)}</p>
       <h2><span class="heading-icon">${renderIcon("target")}</span>${escapeHtml(range.option.periodLabelDisplay)} ${escapeHtml(labels.negotiationRange)}</h2>
       <div class="range-value">${escapeHtml(formatRate(range.floorRate))}-${escapeHtml(formatRate(range.ceilingRate))}</div>
@@ -855,6 +856,22 @@ function renderNegotiationRangePanel(
       </dl>
     </article>
   `;
+}
+
+function scrollRangeResultIntoView(): void {
+  window.requestAnimationFrame(() => {
+    const rangeResult = appRoot.querySelector<HTMLElement>("[data-range-result]");
+    if (!rangeResult) return;
+    rangeResult.focus({ preventScroll: true });
+    rangeResult.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
+  });
+}
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function renderRangeGuide(labels: AppCopy["flow"]): string {
