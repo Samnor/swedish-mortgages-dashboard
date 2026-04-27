@@ -554,7 +554,7 @@ function renderApp(): string {
         <p>${escapeHtml(labels.heroBody)}</p>
       </section>
       ${renderFundingIntro(labels.fundingIntro)}
-      ${kpis ? renderKpiGrid(kpis, labels.rates) : ""}
+      ${kpis && snapshot ? renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks) : ""}
       ${
         snapshot
           ? renderDurationFlow(
@@ -562,6 +562,7 @@ function renderApp(): string {
               kpis?.latestDate ?? null,
               negotiationOptions,
               selectedRange,
+              snapshot.sourceLinks,
             )
           : ""
       }
@@ -628,7 +629,11 @@ function renderFundingIntro(labels: AppCopy["fundingIntro"]): string {
   `;
 }
 
-function renderKpiGrid(kpis: DashboardKpis, labels: AppCopy["rates"]): string {
+function renderKpiGrid(
+  kpis: DashboardKpis,
+  labels: AppCopy["rates"],
+  sources: SourceLink[],
+): string {
   return `
     <section class="kpi-grid" aria-label="Mortgage market summary">
       ${renderKpiCard(
@@ -637,6 +642,7 @@ function renderKpiGrid(kpis: DashboardKpis, labels: AppCopy["rates"]): string {
         `${labels.latestSourceDate} ${kpis.latestDate}`,
         kpis.policyRateChange30d,
         labels.vs30dAgo,
+        sourceById(sources, "riksbank-swea"),
       )}
       ${renderKpiCard(
         labels.mortgageBond5y,
@@ -644,6 +650,7 @@ function renderKpiGrid(kpis: DashboardKpis, labels: AppCopy["rates"]): string {
         labels.mortgageBondProxy,
         kpis.mortgageBond5yChange30d,
         labels.vs30dAgo,
+        sourceById(sources, "riksbank-swea"),
       )}
     </section>
   `;
@@ -655,6 +662,7 @@ function renderKpiCard(
   detail: string,
   delta: number | null,
   vsLabel: string,
+  source: SourceLink | null,
 ): string {
   return `
     <article class="kpi-card">
@@ -662,6 +670,7 @@ function renderKpiCard(
       <strong>${escapeHtml(value)}</strong>
       <span>${escapeHtml(detail)}</span>
       <span class="delta">${escapeHtml(formatDelta(delta))} ${escapeHtml(vsLabel)}</span>
+      ${source ? renderSourceChip(source) : ""}
     </article>
   `;
 }
@@ -671,6 +680,7 @@ function renderDurationFlow(
   latestDate: string | null,
   options: NegotiationOption[],
   range: NegotiationRange | null,
+  sources: SourceLink[],
 ): string {
   if (options.length === 0) {
     return `
@@ -706,7 +716,7 @@ function renderDurationFlow(
             .join("")}
         </div>
       </div>
-      ${range ? renderNegotiationRangePanel(labels, latestDate, range) : renderEmptyRange(labels)}
+      ${range ? renderNegotiationRangePanel(labels, latestDate, range, sources) : renderEmptyRange(labels)}
     </section>
   `;
 }
@@ -725,8 +735,12 @@ function renderNegotiationRangePanel(
   labels: AppCopy["flow"],
   latestDate: string | null,
   range: NegotiationRange,
+  sources: SourceLink[],
 ): string {
   const confidence = confidenceForBankCount(range.option.bankCount);
+  const bankRateSource = sourceById(sources, "bank-listed-rates");
+  const fundingSource = sourceById(sources, "riksbank-swea");
+  const marginSource = sourceById(sources, "fi-gross-margin");
   return `
     <article class="range-card">
       <p class="eyebrow">${escapeHtml(labels.step2)}</p>
@@ -746,22 +760,45 @@ function renderNegotiationRangePanel(
           : ""
       }
       <dl class="range-details">
-        ${renderDetail(labels.medianListed, formatRate(range.option.medianListRate))}
-        ${renderDetail(labels.fundingProxy, formatRate(range.option.medianFundingCost))}
-        ${renderDetail(labels.banksSampled, String(range.option.bankCount))}
-        ${renderDetail(labels.confidence, confidenceLabel(labels, confidence))}
+        ${renderDetail(labels.medianListed, formatRate(range.option.medianListRate), bankRateSource)}
+        ${renderDetail(labels.fundingProxy, formatRate(range.option.medianFundingCost), fundingSource)}
+        ${renderDetail(labels.banksSampled, String(range.option.bankCount), bankRateSource)}
+        ${renderDetail(labels.confidence, confidenceLabel(labels, confidence), marginSource)}
         ${renderDetail(latestDate ? labels.latestMarketDate : labels.latestMarketDate, latestDate ?? copy[locale].diagnostics.unavailable)}
       </dl>
     </article>
   `;
 }
 
-function renderDetail(label: string, value: string): string {
+function renderDetail(
+  label: string,
+  value: string,
+  source: SourceLink | null = null,
+): string {
   return `
     <div>
       <dt>${escapeHtml(label)}</dt>
       <dd>${escapeHtml(value)}</dd>
+      ${source ? renderSourceChip(source) : ""}
     </div>
+  `;
+}
+
+function sourceById(sources: SourceLink[], id: string): SourceLink | null {
+  return sources.find((source) => source.id === id) ?? null;
+}
+
+function renderSourceChip(source: SourceLink): string {
+  return `
+    <a
+      class="source-chip"
+      href="${escapeAttr(source.url)}"
+      rel="noreferrer"
+      target="_blank"
+      title="${escapeAttr(source.usedFor)}"
+    >
+      ${escapeHtml(source.label)}
+    </a>
   `;
 }
 

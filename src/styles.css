@@ -147,6 +147,33 @@ code {
   text-transform: uppercase;
 }
 
+.source-chip {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 10px;
+  padding: 7px 9px;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #17211f;
+  font-family: "Courier New", monospace;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  overflow: hidden;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-chip:hover,
+.source-chip:focus-visible {
+  border-color: #743a22;
+  outline: none;
+}
+
 .flow-panel {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) minmax(280px, 0.9fr);
@@ -243,6 +270,15 @@ code {
   margin: 4px 0 0;
   font-size: 1.2rem;
   font-weight: 700;
+}
+
+.range-details .source-chip {
+  max-width: 100%;
+  margin-top: 8px;
+  border-color: rgba(251, 244, 231, 0.18);
+  background: rgba(251, 244, 231, 0.08);
+  color: #fbf4e7;
+  font-size: 0.66rem;
 }
 
 .assumption-note,
