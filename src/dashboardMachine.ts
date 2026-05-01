@@ -54,23 +54,33 @@ export type NegotiationRange = {
 };
 
 export type ConfidenceLevel = "high" | "medium" | "low";
+export type DashboardFreshnessLevel = "current" | "watch" | "stale" | "invalid";
+
+export type DashboardMode =
+  | "choose_period"
+  | "trust_review"
+  | "market_review"
+  | "evidence_review"
+  | "method_review";
+
+export type ReviewMode = Exclude<DashboardMode, "choose_period">;
 
 export type DashboardState =
   | { value: "idle" }
   | { value: "loading" }
-  | { value: "ready_unselected"; snapshot: DashboardSnapshot }
   | {
-      value: "duration_selected";
+      value: "ready";
       snapshot: DashboardSnapshot;
-      selectedPeriod: string;
+      selectedPeriod: string | null;
+      mode: DashboardMode;
     }
   | {
       value: "pipeline_inspection";
       snapshot: DashboardSnapshot;
       selectedPeriod: string | null;
+      returnMode: DashboardMode;
     }
   | { value: "empty"; generatedAt: string }
-  | { value: "stale"; snapshot: DashboardSnapshot; reason: string }
   | { value: "error"; message: string };
 
 export type DashboardEvent =
@@ -78,6 +88,7 @@ export type DashboardEvent =
   | { type: "LOAD_SUCCEEDED"; snapshot: DashboardSnapshot }
   | { type: "LOAD_FAILED"; message: string }
   | { type: "SELECT_DURATION"; periodLabel: string }
+  | { type: "VIEW_REVIEW"; mode: ReviewMode }
   | { type: "VIEW_PIPELINE" }
   | { type: "CLOSE_PIPELINE" }
   | { type: "RETRY" };
@@ -86,18 +97,27 @@ export type DashboardStateValue = DashboardState["value"];
 export type DashboardEventType = DashboardEvent["type"];
 
 const MAX_SNAPSHOT_AGE_HOURS = 36;
-const MAX_OUTGOING_TRANSITIONS_PER_STATE = 3;
+const MAX_WATCH_SNAPSHOT_AGE_HOURS = 24;
+const MAX_STALE_MARKET_AGE_DAYS = 7;
+const MAX_WATCH_MARKET_AGE_DAYS = 4;
+const MAX_OUTGOING_TRANSITIONS_PER_STATE = 4;
 
 export const transitionMap = {
   idle: ["START"],
   loading: ["LOAD_FAILED", "LOAD_SUCCEEDED"],
-  ready_unselected: ["RETRY", "SELECT_DURATION", "VIEW_PIPELINE"],
-  duration_selected: ["RETRY", "SELECT_DURATION", "VIEW_PIPELINE"],
+  ready: ["RETRY", "SELECT_DURATION", "VIEW_REVIEW", "VIEW_PIPELINE"],
   pipeline_inspection: ["CLOSE_PIPELINE", "RETRY"],
   empty: ["RETRY"],
-  stale: ["RETRY"],
   error: ["RETRY"],
 } as const satisfies Record<DashboardStateValue, readonly DashboardEventType[]>;
+
+export const proposedModeGroups = {
+  choose_period: ["task", "trust_compact"],
+  trust_review: ["trust", "sources"],
+  market_review: ["market"],
+  evidence_review: ["evidence", "limits"],
+  method_review: ["method", "sources"],
+} as const satisfies Record<DashboardMode, readonly string[]>;
 
 export const stateComplexity = Object.fromEntries(
   Object.entries(transitionMap).map(([state, events]) => [state, events.length]),
@@ -208,51 +228,37 @@ export function transition(
         if (event.snapshot.rates.length === 0) {
           return { value: "empty", generatedAt: event.snapshot.generatedAt };
         }
-        const staleReason = snapshotStaleReason(event.snapshot);
-        if (staleReason) {
-          return {
-            value: "stale",
-            snapshot: event.snapshot,
-            reason: staleReason,
-          };
-        }
-        return { value: "ready_unselected", snapshot: event.snapshot };
+        return {
+          value: "ready",
+          snapshot: event.snapshot,
+          selectedPeriod: null,
+          mode: "choose_period",
+        };
       }
       return state;
 
-    case "ready_unselected":
+    case "ready":
       if (event.type === "SELECT_DURATION") {
         if (!hasNegotiationPeriod(state.snapshot, event.periodLabel)) {
           return state;
         }
         return {
-          value: "duration_selected",
+          ...state,
           snapshot: state.snapshot,
           selectedPeriod: event.periodLabel,
+          mode: defaultReviewMode(state.snapshot),
         };
       }
-      if (event.type === "VIEW_PIPELINE") {
-        return {
-          value: "pipeline_inspection",
-          snapshot: state.snapshot,
-          selectedPeriod: null,
-        };
-      }
-      if (event.type === "RETRY") return { value: "loading" };
-      return state;
-
-    case "duration_selected":
-      if (event.type === "SELECT_DURATION") {
-        if (!hasNegotiationPeriod(state.snapshot, event.periodLabel)) {
-          return state;
-        }
-        return { ...state, selectedPeriod: event.periodLabel };
+      if (event.type === "VIEW_REVIEW") {
+        if (!state.selectedPeriod) return state;
+        return { ...state, mode: event.mode };
       }
       if (event.type === "VIEW_PIPELINE") {
         return {
           value: "pipeline_inspection",
           snapshot: state.snapshot,
           selectedPeriod: state.selectedPeriod,
+          returnMode: state.mode,
         };
       }
       if (event.type === "RETRY") return { value: "loading" };
@@ -260,24 +266,27 @@ export function transition(
 
     case "pipeline_inspection":
       if (event.type === "CLOSE_PIPELINE") {
-        if (state.selectedPeriod) {
-          return {
-            value: "duration_selected",
-            snapshot: state.snapshot,
-            selectedPeriod: state.selectedPeriod,
-          };
-        }
-        return { value: "ready_unselected", snapshot: state.snapshot };
+        return {
+          value: "ready",
+          snapshot: state.snapshot,
+          selectedPeriod: state.selectedPeriod,
+          mode: state.returnMode,
+        };
       }
       if (event.type === "RETRY") return { value: "loading" };
       return state;
 
     case "empty":
-    case "stale":
     case "error":
       if (event.type === "RETRY") return { value: "loading" };
       return state;
   }
+}
+
+function defaultReviewMode(snapshot: DashboardSnapshot): ReviewMode {
+  return dashboardFreshnessLevel(snapshot) === "current"
+    ? "market_review"
+    : "trust_review";
 }
 
 function hasNegotiationPeriod(
@@ -487,4 +496,42 @@ export function snapshotStaleReason(snapshot: DashboardSnapshot): string | null 
     return `Snapshot is older than ${MAX_SNAPSHOT_AGE_HOURS} hours.`;
   }
   return null;
+}
+
+export function dashboardFreshnessLevel(
+  snapshot: DashboardSnapshot,
+  now = Date.now(),
+): DashboardFreshnessLevel {
+  const generatedAt = Date.parse(snapshot.generatedAt);
+  const latestMarketDate = snapshot.rates.at(-1)?.date;
+  const marketDate = latestMarketDate
+    ? Date.parse(`${latestMarketDate}T00:00:00Z`)
+    : NaN;
+
+  if (Number.isNaN(generatedAt) || Number.isNaN(marketDate)) return "invalid";
+
+  const snapshotAgeHours = Math.max(
+    0,
+    Math.floor((now - generatedAt) / 1000 / 60 / 60),
+  );
+  const marketAgeDays = Math.max(
+    0,
+    Math.floor((now - marketDate) / 1000 / 60 / 60 / 24),
+  );
+
+  if (
+    snapshotAgeHours > MAX_SNAPSHOT_AGE_HOURS ||
+    marketAgeDays > MAX_STALE_MARKET_AGE_DAYS
+  ) {
+    return "stale";
+  }
+
+  if (
+    snapshotAgeHours > MAX_WATCH_SNAPSHOT_AGE_HOURS ||
+    marketAgeDays > MAX_WATCH_MARKET_AGE_DAYS
+  ) {
+    return "watch";
+  }
+
+  return "current";
 }
