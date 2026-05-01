@@ -116,6 +116,7 @@ type AppCopy = {
     string
   >;
   freshness: Record<
+    | "status"
     | "eyebrow"
     | "title"
     | "body"
@@ -187,9 +188,9 @@ type AppCopy = {
 const copy = {
   sv: {
     appLabel: "Svensk bolånekoll",
-    heroTitle: "Marknadsläge innan du förhandlar med banken.",
+    heroTitle: "Se när bankens marginal börjar bli tunn.",
     heroBody:
-      "Välj hur länge du funderar på att binda bolånet och få ett marknadsbaserat intervall att använda inför samtalet med banken.",
+      "Välj bindningstid och gör en sanity check av ungefär var bolåneräntan närmar sig finansieringsproxyn.",
     languageLabel: "Språk",
     swedish: "Svenska",
     english: "English",
@@ -202,7 +203,7 @@ const copy = {
       vs30dAgo: "mot 30 dagar sedan",
     },
     charts: {
-      aria: "Diagram för bolåneförhandling",
+      aria: "Diagram för bolånemarginal",
       chart1: "Diagram 1",
       chart2: "Diagram 2",
       chart3: "Diagram 3",
@@ -211,16 +212,16 @@ const copy = {
         "Styrränta och Riksbanken/Refinitiv CAISSE-proxy bakom förhandlingsläget.",
       durationComparison: "Din bindningstid mot alternativen",
       durationComparisonDescription:
-        "Bankernas medianräntor och målintervall över bindningstider.",
-      fundingMargin: "Det du förhandlar om",
+        "Bankernas medianräntor och modellens tunn-marginalzon över bindningstider.",
+      fundingMargin: "Marginalen över proxyn",
       fundingMarginDescription:
-        "Separera CAISSE-baserad marknadsproxy från marginalutrymmet i observerade räntor.",
+        "Separera CAISSE-baserad marknadsproxy från marginalen i observerade räntor.",
       coveredBondProxy2y: "2-årig CAISSE-proxy",
       coveredBondProxy5y: "5-årig CAISSE-proxy",
       policyRate: "Styrränta",
       target: "mål",
       medianListed: "Median listad",
-      negotiationTarget: "Förhandlingsmål",
+      negotiationTarget: "Tunn marginal",
       selected: "Vald",
       fundingProxy: "Marknadsproxy",
       marginRoom: "Marginalutrymme",
@@ -236,17 +237,17 @@ const copy = {
       noDataTitle: "Ingen förhandlingsdata än.",
       noDataBody:
         "Appen har räntehistorik, men inga bindningstidsspecifika bankjämförelser i denna snapshot.",
-      waitingTitle: "Välj en bindningstid för att se ett startintervall.",
+      waitingTitle: "Välj en bindningstid för att se marginalzonen.",
       waitingBody:
-        "Vi visar inte ett förvalt råd. Välj först hur länge du funderar på att binda lånet, så räknar appen fram ett intervall och rätt diagram för just den tiden.",
+        "Vi visar inte ett förvalt förhandlingsbud. Välj hur länge du funderar på att binda lånet, så räknar appen fram var räntan börjar närma sig finansieringsproxyn.",
       question: "Hur länge vill du binda bolånet?",
       body:
-        "Välj bindningstiden du överväger. Intervallet nedan är en startpunkt för samtalet, baserad på bankernas listräntor och en CAISSE-baserad marknadsproxy.",
-      negotiationRange: "startintervall",
-      rangeBodyStart: "Använd cirka",
-      rangeBodyMiddle: "som första samtalsmål. Det är ungefär",
+        "Välj bindningstiden du överväger. Appen jämför bankernas listräntor med en CAISSE-baserad marknadsproxy för att visa när marginalen börjar bli tunn.",
+      negotiationRange: "marginalzon",
+      rangeBodyStart: "Modellen placerar tunn-marginalzonen vid",
+      rangeBodyMiddle: "som mittpunkt. Det är ungefär",
       rangeBodyEnd:
-        "under medianlisträntan i denna bindningstid. Intervallet är inte ett garanterat erbjudande.",
+        "mot medianlisträntan i denna bindningstid. Det är en sanity check, inte ett garanterat erbjudande eller bankens faktiska smärtgräns.",
       medianListed: "Median listad",
       fundingProxy: "Marknadsproxy",
       banksSampled: "Banker i urvalet",
@@ -258,17 +259,17 @@ const copy = {
       lowConfidenceNote:
         "Få banker i urvalet. Använd intervallet som grov signal, inte som stark marknadsnivå.",
       assumptionNote:
-        "Bygger på listräntor, Riksbanken/Refinitiv Stadshypotek CAISSE-proxy och en enkel marginalmodell. Faktiska kundrabatter kan avvika.",
-      howToReadTitle: "Så läser du intervallet",
+        "Bygger på listräntor, Riksbanken/Refinitiv Stadshypotek CAISSE-proxy och en enkel marginalmodell. Bankens verkliga lönsamhetsgräns kan ligga högre eller lägre.",
+      howToReadTitle: "Så läser du marginalzonen",
       howToReadBody:
-        "Intervallet är ett samtalsverktyg, inte ett kreditbeslut. Det kombinerar bankernas publicerade listräntor med en svensk bolåneobligationsproxy, inte bankens faktiska finansieringskostnad.",
+        "Zonen är ett rimlighetstest, inte ett kreditbeslut. Den visar var räntan börjar närma sig en svensk bolåneobligationsproxy, inte bankens faktiska totalkostnad.",
       howToReadFloor:
-        "Nedre delen är aggressiv och bör ses som ett starkt förhandlingsankare.",
+        "Nedre delen ligger närmast proxyn och bör ses som mycket tunn marginal i modellen.",
       howToReadMidpoint:
-        "Mitten är den praktiska startpunkten att säga högt i samtalet.",
+        "Mitten är en praktisk ungefärlig nivå för att förstå om ett erbjudande är nära modellens marginalgolv.",
       howToReadCeiling:
-        "Övre delen är fortfarande under medianen men mindre offensiv.",
-      dataBehindRange: "Data bakom intervallet",
+        "Övre delen är mindre pressad, men fortfarande nära den modellerade tunn-marginalzonen.",
+      dataBehindRange: "Data bakom marginalzonen",
     },
     diagnostics: {
       title: "Data- och appdiagnostik",
@@ -280,6 +281,7 @@ const copy = {
       unavailable: "saknas",
     },
     freshness: {
+      status: "Status",
       eyebrow: "Datafärskhet",
       title: "Så aktuell är datan",
       body:
@@ -462,10 +464,10 @@ const copy = {
     },
   },
   en: {
-    appLabel: "Swedish Mortgage Intelligence",
-    heroTitle: "Market context before you negotiate with a lender.",
+    appLabel: "Swedish Mortgage Guide",
+    heroTitle: "See where the bank's margin starts to look thin.",
     heroBody:
-      "Pick the binding period you are considering and get a market-informed range to use before talking to a lender.",
+      "Pick a binding period and sanity-check roughly where the mortgage rate approaches the funding proxy.",
     languageLabel: "Language",
     swedish: "Svenska",
     english: "English",
@@ -478,7 +480,7 @@ const copy = {
       vs30dAgo: "vs 30d ago",
     },
     charts: {
-      aria: "Mortgage negotiation charts",
+      aria: "Mortgage margin charts",
       chart1: "Chart 1",
       chart2: "Chart 2",
       chart3: "Chart 3",
@@ -487,16 +489,16 @@ const copy = {
         "Policy rate and Riksbanken/Refinitiv CAISSE proxy behind the negotiation.",
       durationComparison: "Your duration against alternatives",
       durationComparisonDescription:
-        "Median listed bank rates and target range across binding periods.",
-      fundingMargin: "What you are haggling over",
+        "Median listed bank rates and the model's thin-margin zone across binding periods.",
+      fundingMargin: "Margin over the proxy",
       fundingMarginDescription:
-        "Separates the CAISSE-based market proxy from the margin room implied by observed rates.",
+        "Separates the CAISSE-based market proxy from the margin implied by observed rates.",
       coveredBondProxy2y: "2Y CAISSE proxy",
       coveredBondProxy5y: "5Y CAISSE proxy",
       policyRate: "Policy rate",
       target: "target",
       medianListed: "Median listed",
-      negotiationTarget: "Negotiation target",
+      negotiationTarget: "Thin margin",
       selected: "Selected",
       fundingProxy: "Market proxy",
       marginRoom: "Margin room",
@@ -512,17 +514,17 @@ const copy = {
       noDataTitle: "No negotiation data yet.",
       noDataBody:
         "The app has rate history, but no duration-specific bank comparison rows in this snapshot.",
-      waitingTitle: "Pick a binding period to see a starting range.",
+      waitingTitle: "Pick a binding period to see the margin zone.",
       waitingBody:
-        "The app does not show a default recommendation. Choose the period you are considering first, then it calculates the range and charts for that period.",
+        "The app does not show a default bid. Choose the period you are considering first, then it estimates where the rate starts approaching the funding proxy.",
       question: "How long do you want to bind your mortgage?",
       body:
-        "Pick the duration you are considering. The range below is a starting point for the conversation, based on listed bank rates and a CAISSE-based market proxy.",
-      negotiationRange: "starting range",
-      rangeBodyStart: "Use around",
-      rangeBodyMiddle: "as an opening target. That is roughly",
+        "Pick the duration you are considering. The app compares listed bank rates with a CAISSE-based market proxy to show where the margin starts to look thin.",
+      negotiationRange: "margin zone",
+      rangeBodyStart: "The model puts the thin-margin zone at",
+      rangeBodyMiddle: "as the midpoint. That is roughly",
       rangeBodyEnd:
-        "below the median listed rate in this duration bucket. The range is not a guaranteed offer.",
+        "relative to the median listed rate in this duration bucket. It is a sanity check, not a guaranteed offer or the bank's actual break-even point.",
       medianListed: "Median listed",
       fundingProxy: "Market proxy",
       banksSampled: "Banks sampled",
@@ -534,17 +536,17 @@ const copy = {
       lowConfidenceNote:
         "Few banks in the sample. Use the range as a rough signal, not a strong market level.",
       assumptionNote:
-        "Based on listed rates, the Riksbanken/Refinitiv Stadshypotek CAISSE proxy and a simple margin model. Actual customer discounts can differ.",
-      howToReadTitle: "How to read the range",
+        "Based on listed rates, the Riksbanken/Refinitiv Stadshypotek CAISSE proxy and a simple margin model. The bank's real profitability floor can be higher or lower.",
+      howToReadTitle: "How to read the margin zone",
       howToReadBody:
-        "The range is a conversation tool, not a credit decision. It combines published bank list rates with a Swedish mortgage-bond market proxy, not the bank's actual funding cost.",
+        "The zone is a reasonableness check, not a credit decision. It shows where the rate starts approaching a Swedish mortgage-bond proxy, not the bank's actual all-in cost.",
       howToReadFloor:
-        "The lower end is aggressive and works best as a strong negotiation anchor.",
+        "The lower end sits closest to the proxy and should be read as very thin margin in the model.",
       howToReadMidpoint:
-        "The midpoint is the practical opening target to say out loud.",
+        "The midpoint is a practical approximate level for judging whether an offer is near the model's margin floor.",
       howToReadCeiling:
-        "The upper end is still below the median, but less ambitious.",
-      dataBehindRange: "Data behind this range",
+        "The upper end is less pressed, but still near the modeled thin-margin zone.",
+      dataBehindRange: "Data behind this margin zone",
     },
     diagnostics: {
       title: "Data and app diagnostics",
@@ -556,6 +558,7 @@ const copy = {
       unavailable: "n/a",
     },
     freshness: {
+      status: "Status",
       eyebrow: "Data freshness",
       title: "How current the data is",
       body:
@@ -839,16 +842,6 @@ function renderApp(): string {
         <p>${escapeHtml(labels.heroBody)}</p>
       </section>
       ${
-        snapshot && kpis
-          ? renderFreshnessPanel(
-              labels.freshness,
-              snapshot,
-              kpis,
-              state.value === "stale" ? state.reason : null,
-            )
-          : ""
-      }
-      ${
         snapshot
           ? renderDurationFlow(
               labels.flow,
@@ -859,6 +852,17 @@ function renderApp(): string {
             )
           : ""
       }
+      ${
+        snapshot && kpis
+          ? renderFreshnessPanel(
+              labels.freshness,
+              snapshot,
+              kpis,
+              state.value === "stale" ? state.reason : null,
+            )
+          : ""
+      }
+      ${kpis && snapshot ? renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks) : ""}
       ${
         snapshot && selectedRange
           ? renderProgressiveSection(
@@ -881,7 +885,6 @@ function renderApp(): string {
       }
       ${renderFundingIntro(labels.fundingIntro)}
       ${renderCaisseSection(labels.caisse)}
-      ${kpis && snapshot ? renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks) : ""}
       ${
         snapshot &&
         (state.value === "ready_unselected" || state.value === "duration_selected")
@@ -948,7 +951,7 @@ function renderFreshnessPanel(
         ${renderFreshnessDetail(labels.snapshotAge, metric.snapshotAgeLabel)}
         ${renderFreshnessDetail(labels.marketAge, metric.marketAgeLabel)}
         ${renderFreshnessDetail(labels.sourceCount, metric.sourceCountLabel)}
-        ${renderFreshnessDetail(labels.eyebrow, labels[metric.level], `freshness-badge freshness-badge-${metric.level}`)}
+        ${renderFreshnessDetail(labels.status, labels[metric.level], `freshness-badge freshness-badge-${metric.level}`)}
       </dl>
     </section>
   `;
