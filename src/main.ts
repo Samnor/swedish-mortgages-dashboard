@@ -2,18 +2,22 @@ import {
   confidenceForBankCount,
   deriveDashboardKpis,
   deriveNegotiationRange,
+  dashboardFreshnessLevel,
   maxOutgoingTransitions,
   parseDashboardSnapshot,
   stateComplexity,
   transition,
   type ConfidenceLevel,
   type DashboardEvent,
+  type DashboardFreshnessLevel,
   type DashboardKpis,
   type DashboardSnapshot,
   type DashboardState,
   type NegotiationOption,
   type NegotiationRange,
+  type ReviewMode,
   type SourceLink,
+  snapshotStaleReason,
 } from "./dashboardMachine";
 import "./styles.css";
 
@@ -115,6 +119,18 @@ type AppCopy = {
     "title" | "state" | "reads" | "complexity" | "empty" | "unavailable",
     string
   >;
+  review: Record<
+    | "label"
+    | "trust"
+    | "trustBody"
+    | "market"
+    | "marketBody"
+    | "evidence"
+    | "evidenceBody"
+    | "method"
+    | "methodBody",
+    string
+  >;
   freshness: Record<
     | "status"
     | "eyebrow"
@@ -209,7 +225,7 @@ const copy = {
       chart3: "Diagram 3",
       marketPressure: "Marknadstryck",
       marketPressureDescription:
-        "Styrränta och Riksbanken/Refinitiv CAISSE-proxy bakom förhandlingsläget.",
+        "Styrränta och Riksbanken/Refinitiv CAISSE-proxy bakom marginalzonen.",
       durationComparison: "Din bindningstid mot alternativen",
       durationComparisonDescription:
         "Bankernas medianräntor och modellens tunn-marginalzon över bindningstider.",
@@ -239,7 +255,7 @@ const copy = {
         "Appen har räntehistorik, men inga bindningstidsspecifika bankjämförelser i denna snapshot.",
       waitingTitle: "Välj en bindningstid för att se marginalzonen.",
       waitingBody:
-        "Vi visar inte ett förvalt förhandlingsbud. Välj hur länge du funderar på att binda lånet, så räknar appen fram var räntan börjar närma sig finansieringsproxyn.",
+        "Vi visar inte ett förvalt bud. Välj hur länge du funderar på att binda lånet, så räknar appen fram var räntan börjar närma sig finansieringsproxyn.",
       question: "Hur länge vill du binda bolånet?",
       body:
         "Välj bindningstiden du överväger. Appen jämför bankernas listräntor med en CAISSE-baserad marknadsproxy för att visa när marginalen börjar bli tunn.",
@@ -279,6 +295,17 @@ const copy = {
         "State machine-komplexitet: max {count} utgående övergångar per tillstånd.",
       empty: "Inga publika dashboardrader genererades",
       unavailable: "saknas",
+    },
+    review: {
+      label: "Fördjupa",
+      trust: "Tillit",
+      trustBody: "Kontrollera färskhet, urval och viktiga begränsningar.",
+      market: "Marknad",
+      marketBody: "Se ränteläget och CAISSE-proxyn bakom marginalzonen.",
+      evidence: "Diagram",
+      evidenceBody: "Jämför vald bindningstid med övriga alternativ.",
+      method: "Metod",
+      methodBody: "Läs hur finansieringsproxyn och CAISSE används.",
     },
     freshness: {
       status: "Status",
@@ -370,7 +397,7 @@ const copy = {
       eyebrow: "Viktigt att veta",
       title: "Det här vet inte appen om dig",
       body:
-        "Appen visar marknadsläge och förhandlingsutrymme. Den ersätter inte bankens kreditprövning och känner inte till din personliga riskprofil.",
+        "Appen visar marknadsläge och modellerad marginal. Den ersätter inte bankens kreditprövning och känner inte till din personliga riskprofil.",
       items: [
         "Belåningsgrad, inkomst, amorteringskrav och övriga lån.",
         "Din relation till banken, sparande, försäkringar och historik.",
@@ -486,7 +513,7 @@ const copy = {
       chart3: "Chart 3",
       marketPressure: "Market pressure",
       marketPressureDescription:
-        "Policy rate and Riksbanken/Refinitiv CAISSE proxy behind the negotiation.",
+        "Policy rate and Riksbanken/Refinitiv CAISSE proxy behind the margin zone.",
       durationComparison: "Your duration against alternatives",
       durationComparisonDescription:
         "Median listed bank rates and the model's thin-margin zone across binding periods.",
@@ -556,6 +583,17 @@ const copy = {
         "State machine complexity: max {count} outgoing transitions per state.",
       empty: "No public dashboard rows were generated at",
       unavailable: "n/a",
+    },
+    review: {
+      label: "Inspect",
+      trust: "Trust",
+      trustBody: "Check freshness, sample size and the main caveats.",
+      market: "Market",
+      marketBody: "See the rate context and CAISSE proxy behind the margin zone.",
+      evidence: "Charts",
+      evidenceBody: "Compare the selected binding period with the alternatives.",
+      method: "Method",
+      methodBody: "Read how the funding proxy and CAISSE are used.",
     },
     freshness: {
       status: "Status",
@@ -647,7 +685,7 @@ const copy = {
       eyebrow: "Important caveat",
       title: "What this app does not know about you",
       body:
-        "The app shows market context and negotiation room. It does not replace a lender's credit decision and does not know your personal risk profile.",
+        "The app shows market context and modeled margin. It does not replace a lender's credit decision and does not know your personal risk profile.",
       items: [
         "Loan-to-value, income, amortization requirements and other debt.",
         "Your relationship with the bank, savings, insurance and history.",
@@ -674,7 +712,7 @@ const copy = {
         {
           title: "Negotiation is mostly about the margin",
           body:
-            "The modeled gap is margin room over the market proxy. Actual bank funding also depends on deposits, hedging, liquidity, capital and internal pricing.",
+            "The modeled gap is margin over the market proxy. Actual bank funding also depends on deposits, hedging, liquidity, capital and internal pricing.",
         },
       ],
     },
@@ -770,6 +808,9 @@ appRoot.addEventListener("click", (event) => {
     send({ type: "SELECT_DURATION", periodLabel: button.dataset.period });
     scrollRangeResultIntoView();
   }
+  if (action === "set-review-mode" && isReviewMode(button.dataset.mode)) {
+    send({ type: "VIEW_REVIEW", mode: button.dataset.mode });
+  }
   if (action === "view-pipeline") send({ type: "VIEW_PIPELINE" });
   if (action === "close-pipeline") send({ type: "CLOSE_PIPELINE" });
   if (action === "retry") loadSnapshot();
@@ -824,8 +865,7 @@ function renderApp(): string {
   const snapshot = snapshotFromState(state);
   const kpis = snapshot ? deriveDashboardKpis(snapshot) : null;
   const negotiationOptions = snapshot?.negotiationOptions ?? [];
-  const selectedPeriod =
-    state.value === "duration_selected" ? state.selectedPeriod : null;
+  const selectedPeriod = state.value === "ready" ? state.selectedPeriod : null;
   const selectedOption =
     negotiationOptions.find((option) => option.periodLabel === selectedPeriod) ??
     null;
@@ -853,55 +893,51 @@ function renderApp(): string {
           : ""
       }
       ${
-        snapshot && kpis
+        snapshot && kpis && !selectedRange && snapshotStaleReason(snapshot)
           ? renderFreshnessPanel(
               labels.freshness,
               snapshot,
               kpis,
-              state.value === "stale" ? state.reason : null,
-            )
-          : ""
-      }
-      ${kpis && snapshot ? renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks) : ""}
-      ${
-        snapshot && selectedRange
-          ? renderProgressiveSection(
-              labels.charts.aria,
-              renderInsightCharts(labels.charts, negotiationOptions, selectedRange, snapshot),
-              "evidence-section",
-              "chart",
+              snapshotStaleReason(snapshot),
             )
           : ""
       }
       ${
-        snapshot && selectedRange
-          ? renderProgressiveSection(
-              labels.limitations.title,
-              renderLimitations(labels.limitations),
-              "limitations-section",
-              "shield",
+        snapshot && kpis && selectedRange && state.value === "ready"
+          ? renderReviewModeSection(
+              labels,
+              state.mode === "choose_period" ? "trust_review" : state.mode,
+              snapshot,
+              kpis,
+              negotiationOptions,
+              selectedRange,
+              snapshotStaleReason(snapshot),
             )
           : ""
       }
-      ${renderFundingIntro(labels.fundingIntro)}
-      ${renderCaisseSection(labels.caisse)}
       ${
         snapshot &&
-        (state.value === "ready_unselected" || state.value === "duration_selected")
+        state.value === "ready" &&
+        state.selectedPeriod
           ? renderPipelineTeaser(labels.pipeline)
           : ""
       }
-      ${snapshot ? renderSourceLinksPanel(labels.sources, snapshot.sourceLinks) : ""}
-      ${renderDiagnostics(labels, snapshot)}
     </main>
   `;
 }
 
+function isReviewMode(value: string | undefined): value is ReviewMode {
+  return (
+    value === "trust_review" ||
+    value === "market_review" ||
+    value === "evidence_review" ||
+    value === "method_review"
+  );
+}
+
 function snapshotFromState(currentState: DashboardState): DashboardSnapshot | null {
   if (
-    currentState.value === "ready_unselected" ||
-    currentState.value === "duration_selected" ||
-    currentState.value === "stale" ||
+    currentState.value === "ready" ||
     currentState.value === "pipeline_inspection"
   ) {
     return currentState.snapshot;
@@ -919,7 +955,7 @@ function renderLanguageToggle(labels: AppCopy): string {
   `;
 }
 
-type FreshnessLevel = "fresh" | "watch" | "stale" | "invalid";
+type FreshnessLevel = "fresh" | Exclude<DashboardFreshnessLevel, "current">;
 
 type FreshnessMetric = {
   level: FreshnessLevel;
@@ -936,7 +972,7 @@ function renderFreshnessPanel(
   kpis: DashboardKpis,
   staleReason: string | null,
 ): string {
-  const metric = deriveFreshnessMetric(labels, snapshot, kpis, staleReason);
+  const metric = deriveFreshnessMetric(labels, snapshot, kpis);
   return `
     <section class="freshness-panel freshness-${metric.level}" aria-label="${escapeAttr(labels.title)}">
       <div>
@@ -974,7 +1010,6 @@ function deriveFreshnessMetric(
   labels: AppCopy["freshness"],
   snapshot: DashboardSnapshot,
   kpis: DashboardKpis,
-  staleReason: string | null,
 ): FreshnessMetric {
   const generatedAt = Date.parse(snapshot.generatedAt);
   const marketDate = Date.parse(`${kpis.latestDate}T00:00:00Z`);
@@ -985,14 +1020,8 @@ function deriveFreshnessMetric(
     ? null
     : Math.max(0, Math.floor((Date.now() - marketDate) / 1000 / 60 / 60 / 24));
 
-  let level: FreshnessLevel = "fresh";
-  if (staleReason || snapshotAgeHours === null || marketAgeDays === null) {
-    level = staleReason ? "stale" : "invalid";
-  } else if (snapshotAgeHours > 36 || marketAgeDays > 7) {
-    level = "stale";
-  } else if (snapshotAgeHours > 24 || marketAgeDays > 4) {
-    level = "watch";
-  }
+  const freshness = dashboardFreshnessLevel(snapshot);
+  const level: FreshnessLevel = freshness === "current" ? "fresh" : freshness;
 
   return {
     level,
@@ -1025,6 +1054,104 @@ function formatFreshnessAge(
   pluralLabel: string,
 ): string {
   return count === 1 ? singularLabel : pluralLabel.replace("{count}", String(count));
+}
+
+function renderReviewModeSection(
+  labels: AppCopy,
+  mode: ReviewMode,
+  snapshot: DashboardSnapshot,
+  kpis: DashboardKpis,
+  options: NegotiationOption[],
+  range: NegotiationRange,
+  staleReason: string | null,
+): string {
+  return `
+    <section class="review-panel">
+      <div class="review-header">
+        <div>
+          <p class="eyebrow">${escapeHtml(labels.review.label)}</p>
+          <h2>${escapeHtml(reviewTitle(labels, mode))}</h2>
+          <p>${escapeHtml(reviewBody(labels, mode))}</p>
+        </div>
+        ${renderReviewTabs(labels.review, mode)}
+      </div>
+      <div class="review-body">
+        ${renderReviewBody(labels, mode, snapshot, kpis, options, range, staleReason)}
+      </div>
+    </section>
+  `;
+}
+
+function renderReviewTabs(labels: AppCopy["review"], activeMode: ReviewMode): string {
+  const modes: Array<{ mode: ReviewMode; label: string; icon: IconName }> = [
+    { mode: "trust_review", label: labels.trust, icon: "shield" },
+    { mode: "market_review", label: labels.market, icon: "bank" },
+    { mode: "evidence_review", label: labels.evidence, icon: "chart" },
+    { mode: "method_review", label: labels.method, icon: "database" },
+  ];
+  return `
+    <div class="review-tabs" role="tablist" aria-label="${escapeAttr(labels.label)}">
+      ${modes
+        .map(
+          (item) => `
+            <button
+              aria-selected="${item.mode === activeMode}"
+              class="review-tab"
+              data-action="set-review-mode"
+              data-mode="${item.mode}"
+              role="tab"
+              type="button"
+            >
+              ${renderIcon(item.icon)}
+              ${escapeHtml(item.label)}
+            </button>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderReviewBody(
+  labels: AppCopy,
+  mode: ReviewMode,
+  snapshot: DashboardSnapshot,
+  kpis: DashboardKpis,
+  options: NegotiationOption[],
+  range: NegotiationRange,
+  staleReason: string | null,
+): string {
+  if (mode === "trust_review") {
+    return `
+      ${renderFreshnessPanel(labels.freshness, snapshot, kpis, staleReason)}
+      ${renderLimitations(labels.limitations)}
+    `;
+  }
+  if (mode === "market_review") {
+    return renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks);
+  }
+  if (mode === "evidence_review") {
+    return renderInsightCharts(labels.charts, options, range, snapshot);
+  }
+  return `
+    ${renderFundingIntro(labels.fundingIntro)}
+    ${renderCaisseSection(labels.caisse)}
+    ${renderSourceLinksPanel(labels.sources, snapshot.sourceLinks)}
+  `;
+}
+
+function reviewTitle(labels: AppCopy, mode: ReviewMode): string {
+  if (mode === "trust_review") return labels.review.trust;
+  if (mode === "market_review") return labels.review.market;
+  if (mode === "evidence_review") return labels.review.evidence;
+  return labels.review.method;
+}
+
+function reviewBody(labels: AppCopy, mode: ReviewMode): string {
+  if (mode === "trust_review") return labels.review.trustBody;
+  if (mode === "market_review") return labels.review.marketBody;
+  if (mode === "evidence_review") return labels.review.evidenceBody;
+  return labels.review.methodBody;
 }
 
 function renderFundingIntro(labels: AppCopy["fundingIntro"]): string {
@@ -1574,7 +1701,6 @@ function renderDiagnostics(labels: AppCopy, snapshot: DashboardSnapshot | null):
               .join("")}
           </dl>
         </details>
-        ${state.value === "stale" ? `<p>${escapeHtml(state.reason)}</p>` : ""}
         ${state.value === "error" ? `<p>${escapeHtml(state.message)}</p>` : ""}
         ${
           state.value === "empty"

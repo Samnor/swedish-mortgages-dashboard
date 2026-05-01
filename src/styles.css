@@ -229,6 +229,82 @@ code {
   color: #9d3422;
 }
 
+.review-panel {
+  margin-bottom: 18px;
+  padding: 24px;
+  border: 1px solid rgba(23, 33, 31, 0.14);
+  border-radius: 30px;
+  background: rgba(255, 252, 244, 0.82);
+  box-shadow: 0 24px 60px rgba(80, 63, 43, 0.1);
+}
+
+.review-header {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.review-header h2 {
+  font-size: clamp(1.9rem, 3vw, 2.8rem);
+}
+
+.review-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.review-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: #17211f;
+  cursor: pointer;
+  font-family: "Courier New", monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.review-tab[aria-selected="true"] {
+  border-color: #17211f;
+  background: #17211f;
+  color: #fbf4e7;
+}
+
+.review-tab:focus-visible {
+  outline: 2px solid #743a22;
+  outline-offset: 2px;
+}
+
+.review-body > :last-child {
+  margin-bottom: 0;
+}
+
+.review-body .freshness-panel,
+.review-body .kpi-grid,
+.review-body .insight-grid,
+.review-body .limitations-panel,
+.review-body .funding-intro,
+.review-body .caisse-panel,
+.review-body .source-panel {
+  margin-top: 0;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1347,7 +1423,9 @@ code {
   }
 
   .freshness-panel,
-  .freshness-grid {
+  .freshness-grid,
+  .review-header,
+  .review-tabs {
     grid-template-columns: 1fr;
   }
 
