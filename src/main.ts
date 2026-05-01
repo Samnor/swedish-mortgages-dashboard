@@ -205,8 +205,7 @@ const copy = {
   sv: {
     appLabel: "Svensk bolånekoll",
     heroTitle: "Se när bankens marginal börjar bli tunn.",
-    heroBody:
-      "Välj bindningstid och gör en sanity check av ungefär var bolåneräntan närmar sig finansieringsproxyn.",
+    heroBody: "Välj bindningstid och jämför erbjudandet mot en marknadsproxy.",
     languageLabel: "Språk",
     swedish: "Svenska",
     english: "English",
@@ -225,13 +224,13 @@ const copy = {
       chart3: "Diagram 3",
       marketPressure: "Marknadstryck",
       marketPressureDescription:
-        "Styrränta och Riksbanken/Refinitiv CAISSE-proxy bakom kontrollpunkten.",
+        "Styrränta och CAISSE-proxy bakom kontrollpunkten.",
       durationComparison: "Din bindningstid mot alternativen",
       durationComparisonDescription:
-        "Bankernas medianräntor och modellens kontrollpunkt över bindningstider.",
+        "Medianräntor och kontrollpunkter per bindningstid.",
       fundingMargin: "Marginalen över proxyn",
       fundingMarginDescription:
-        "Separera CAISSE-baserad marknadsproxy från marginalen i observerade räntor.",
+        "Marknadsproxy jämfört med observerad ränta.",
       coveredBondProxy2y: "2-årig CAISSE-proxy",
       coveredBondProxy5y: "5-årig CAISSE-proxy",
       policyRate: "Styrränta",
@@ -252,18 +251,18 @@ const copy = {
       step2: "Steg 2",
       noDataTitle: "Ingen förhandlingsdata än.",
       noDataBody:
-        "Appen har räntehistorik, men inga bindningstidsspecifika bankjämförelser i denna snapshot.",
+        "Snapshoten saknar bankjämförelser per bindningstid.",
       waitingTitle: "Välj bindningstid för att köra kontrollen.",
       waitingBody:
-        "Det här är inte en budgenerator. Välj bindningstiden du vill kontrollera, så visar appen ungefär var bankens marginal börjar se tunn ut.",
+        "Appen visar var bankens marginal börjar se tunn ut.",
       question: "Vilken bindningstid vill du kontrollera?",
       body:
-        "Jämför bindningstiden du överväger med bankernas listräntor och en CAISSE-baserad marknadsproxy.",
+        "Jämför listräntor med en CAISSE-baserad marknadsproxy.",
       negotiationRange: "tunn marginal",
       rangeBodyStart: "Modellens mittpunkt är",
       rangeBodyMiddle: "Den ligger ungefär",
       rangeBodyEnd:
-        "från medianlisträntan i denna bindningstid. Använd den som en kontrollpunkt, inte som ett erbjudande eller bankens faktiska smärtgräns.",
+        "från medianlisträntan. Detta är en kontrollpunkt, inte ett erbjudande.",
       medianListed: "Median listad",
       fundingProxy: "Marknadsproxy",
       banksSampled: "Banker i urvalet",
@@ -273,18 +272,18 @@ const copy = {
       mediumConfidence: "Medel",
       lowConfidence: "Låg",
       lowConfidenceNote:
-        "Få banker i urvalet. Använd intervallet som grov signal, inte som stark marknadsnivå.",
+        "Få banker i urvalet. Läs nivån som grov signal.",
       assumptionNote:
-        "Bygger på listräntor, Riksbanken/Refinitiv Stadshypotek CAISSE-proxy och en enkel marginalmodell. Bankens verkliga break-even kan ligga högre eller lägre.",
+        "Bygger på listräntor, CAISSE-proxy och en enkel marginalmodell.",
       howToReadTitle: "Så läser du kontrollpunkten",
       howToReadBody:
-        "Zonen är ett rimlighetstest, inte ett kreditbeslut. Den visar var räntan börjar närma sig en svensk bolåneobligationsproxy, inte bankens faktiska totalkostnad.",
+        "Visar var räntan närmar sig proxyn, inte bankens faktiska totalkostnad.",
       howToReadFloor:
-        "Nedre delen ligger närmast proxyn och bör ses som mycket tunn marginal i modellen.",
+        "Nedre delen ligger närmast proxyn.",
       howToReadMidpoint:
-        "Mitten är en praktisk ungefärlig nivå för att förstå om ett erbjudande är nära modellens marginalgolv.",
+        "Mitten är den praktiska kontrollnivån.",
       howToReadCeiling:
-        "Övre delen är mindre pressad, men fortfarande nära modellens kontrollpunkt.",
+        "Övre delen är mindre pressad.",
       dataBehindRange: "Data bakom kontrollpunkten",
     },
     diagnostics: {
@@ -299,20 +298,20 @@ const copy = {
     review: {
       label: "Nästa kontroll",
       trust: "Datakoll",
-      trustBody: "Se om snapshoten och marknadsdatumet är tillräckligt färska.",
+      trustBody: "Kontrollera snapshot och marknadsdatum.",
       market: "Räntor",
-      marketBody: "Se räntorna och CAISSE-proxyn bakom kontrollpunkten.",
+      marketBody: "Se räntorna bakom kontrollpunkten.",
       evidence: "Jämför",
-      evidenceBody: "Jämför vald bindningstid med andra bindningstider.",
+      evidenceBody: "Jämför med andra bindningstider.",
       method: "Metod",
-      methodBody: "Läs vad CAISSE är och hur finansieringsproxyn byggs.",
+      methodBody: "Se hur CAISSE-proxyn byggs.",
     },
     freshness: {
       status: "Status",
       eyebrow: "Datafärskhet",
       title: "Så aktuell är datan",
       body:
-        "Dashboarden är en statisk snapshot. Kontrollera både när snapshoten exporterades och vilket marknadsdatum som är senaste datapunkt.",
+        "Kontrollera exporttid och senaste marknadsdatum.",
       fresh: "Aktuell",
       watch: "Bevaka",
       stale: "Inaktuell",
@@ -330,7 +329,7 @@ const copy = {
     sources: {
       title: "Källor bakom datapunkterna",
       body:
-        "Länkarna går till de publika källor och referenser som används för räntor, bankjämförelser och marginalkontext.",
+        "Publika källor för räntor, bankjämförelser och metod.",
       empty: "Inga publika källänkar finns i denna snapshot.",
       usedFor: "Används för",
       source: "Källa",
@@ -341,12 +340,12 @@ const copy = {
       eyebrow: "Under huven",
       title: "Så blir rådata till ett beslutsunderlag",
       body:
-        "Den här appen är också ett exempel på data engineering: råa publika källor modelleras i dbt, kontrolleras i CI och exporteras som en liten publik JSON-snapshot som är billig att serva.",
+        "Publika källor modelleras i dbt och exporteras som en liten JSON-snapshot.",
       cta: "Visa dbt-pipelinen",
       close: "Tillbaka till appen",
       caseStudyTitle: "Data engineering-case: bolånedata som produkt",
       caseStudyBody:
-        "Det här läget lämnar bolåneflödet och visar arkitekturen bakom produkten: råa publika källor blir staging-modeller, mart-tabeller, validerade kontrakt och till slut en billig statisk dataprodukt.",
+        "Rådata blir staging-modeller, mart-tabeller, kontrakt och statisk dataprodukt.",
       architectureLabel: "Pipeline-DAG",
       controlsLabel: "Kontroller",
       handoffLabel: "Produktkontrakt",
@@ -374,22 +373,22 @@ const copy = {
         {
           title: "1. Rådata landar i data lake",
           body:
-            "Riksbankens räntor, SCB-data och bankernas publicerade listräntor landar oförändrade i separata råtabeller med tydlig källseparation.",
+            "Räntor och listräntor landar oförändrade i råtabeller.",
         },
         {
           title: "2. dbt städar och modellerar",
           body:
-            "Staging-modeller typkonverterar, deduplicerar och normaliserar namn. Mart-modeller bygger räntedag, bankjämförelser och finansieringsproxy.",
+            "Staging städar data. Mart-modeller bygger appens vyer.",
         },
         {
           title: "3. CI och kontrakt skyddar appen",
           body:
-            "Validatorn kräver sorterade tidsserier, rimliga kvartiler, källänkar och icke-tomma förhandlingsalternativ innan något publiceras.",
+            "Validatorn kräver sortering, källor och rimliga nivåer.",
         },
         {
           title: "4. Appen får bara en kuraterad snapshot",
           body:
-            "Publika användare frågar aldrig Athena. GitHub Actions exporterar en kompakt JSON-fil till S3 och CloudFront, så appen är snabb och billig.",
+            "GitHub Actions exporterar JSON till S3 och CloudFront.",
         },
       ],
     },
@@ -397,34 +396,34 @@ const copy = {
       eyebrow: "Viktigt att veta",
       title: "Det här vet inte appen om dig",
       body:
-        "Appen visar marknadsläge och modellerad marginal. Den ersätter inte bankens kreditprövning och känner inte till din personliga riskprofil.",
+        "Appen känner inte till din riskprofil eller bankrelation.",
       items: [
         "Belåningsgrad, inkomst, amorteringskrav och övriga lån.",
-        "Din relation till banken, sparande, försäkringar och historik.",
-        "Tillfälliga kampanjer, manuella undantag och bankens interna riskpris.",
-        "Om du prioriterar lägsta möjliga ränta eller stabilitet över tid.",
+        "Sparande, försäkringar och historik.",
+        "Kampanjer, undantag och intern riskprisning.",
+        "Din preferens för pris eller stabilitet.",
       ],
     },
     fundingIntro: {
       eyebrow: "Innan du väljer bindningstid",
       title: "Så finansierar banken ditt bolån, förenklat",
       body:
-        "När en bank lånar ut pengar till ett bolån använder den inte bara pengar som redan ligger på sparkonton. Banken lånar också själv på marknaden, ofta genom säkerställda obligationer där många bolån ligger som säkerhet. Din ränta behöver därför täcka bankens egen finansieringskostnad, kostnaden för risk och drift, samt bankens marginal.",
+        "Bolåneräntan behöver täcka finansiering, risk, drift och marginal.",
       points: [
         {
           title: "Kort bindningstid följer marknadsräntan snabbare",
           body:
-            "Rörliga och korta bolån påverkas mer direkt av styrräntan och korta marknadsräntor.",
+            "Rörliga och korta lån följer korta räntor.",
         },
         {
           title: "Längre bindningstid prissätts mer som längre upplåning",
           body:
-            "Bundna bolån påverkas mer av obligationsräntor och vad investerare kräver för att låna ut pengar under flera år.",
+            "Bundna lån följer längre obligationsräntor.",
         },
         {
           title: "Förhandling handlar om marginalen",
           body:
-            "Banken kan sällan trolla bort sin finansieringskostnad, men den kan ibland acceptera lägre marginal om du är en attraktiv kund.",
+            "Banken kan sänka marginalen, inte trolla bort finansieringen.",
         },
       ],
     },
@@ -432,22 +431,22 @@ const copy = {
       eyebrow: "Finansieringsproxy",
       title: "Vad CAISSE betyder i appen",
       body:
-        "Appens finansieringsproxy bygger på Riksbankens publika svenska bolåneobligationsserier SEMB2YCACOMB och SEMB5YCACOMB. Riksbanken grupperar dem som svenska bostadsobligationer, anger Refinitiv som källa i API-metadata och beskriver bolåneobligationsserien på sin förklaringssida som Stadshypoteks obligation, CAISSE.",
+        "Finansieringsproxyn använder Riksbankens SEMB2YCACOMB och SEMB5YCACOMB, med Refinitiv som källa.",
       points: [
         {
           title: "Stadshypotek är Handelsbanken-kopplat",
           body:
-            "Stadshypotek AB är Handelsbankens bolåneinstitut och ett helägt dotterbolag. Serien ska därför inte läsas som ett genomsnitt för alla svenska banker.",
+            "Stadshypotek är Handelsbankens bolåneinstitut, inte ett bankgenomsnitt.",
         },
         {
           title: "CAISSE är ett marknadsriktmärke",
           body:
-            "Nasdaq-dokumentation visar även Stadshypotek-futures för 2 och 5 år, med leverans av Stadshypotek-obligationer nära respektive löptid. CAISSE-namnet hör alltså till ett benchmark-komplex, inte bara en enkel kontantobligation.",
+            "Nasdaq visar även 2Y och 5Y Stadshypotek-futures.",
         },
         {
           title: "Det är inte bankens faktiska finansieringskostnad",
           body:
-            "Vi använder serien som en observerbar marknadsproxy. En banks verkliga finansiering påverkas även av inlåning, hedgar, likviditetskrav, kapital, emissionsmix och intern prissättning.",
+            "Verklig finansiering påverkas även av inlåning, hedgar och kapital.",
         },
       ],
       linksTitle: "Primära källor",
@@ -493,8 +492,7 @@ const copy = {
   en: {
     appLabel: "Swedish Mortgage Guide",
     heroTitle: "See where the bank's margin starts to look thin.",
-    heroBody:
-      "Pick a binding period and sanity-check roughly where the mortgage rate approaches the funding proxy.",
+    heroBody: "Choose a binding period and compare an offer with a market proxy.",
     languageLabel: "Language",
     swedish: "Svenska",
     english: "English",
@@ -513,13 +511,13 @@ const copy = {
       chart3: "Chart 3",
       marketPressure: "Market pressure",
       marketPressureDescription:
-        "Policy rate and Riksbanken/Refinitiv CAISSE proxy behind the checkpoint.",
+        "Policy rate and CAISSE proxy behind the checkpoint.",
       durationComparison: "Your duration against alternatives",
       durationComparisonDescription:
-        "Median listed bank rates and the model's checkpoint across binding periods.",
+        "Median rates and checkpoints by binding period.",
       fundingMargin: "Margin over the proxy",
       fundingMarginDescription:
-        "Separates the CAISSE-based market proxy from the margin implied by observed rates.",
+        "Market proxy versus observed rates.",
       coveredBondProxy2y: "2Y CAISSE proxy",
       coveredBondProxy5y: "5Y CAISSE proxy",
       policyRate: "Policy rate",
@@ -540,18 +538,18 @@ const copy = {
       step2: "Step 2",
       noDataTitle: "No negotiation data yet.",
       noDataBody:
-        "The app has rate history, but no duration-specific bank comparison rows in this snapshot.",
+        "This snapshot lacks duration-specific bank comparisons.",
       waitingTitle: "Choose a binding period to run the check.",
       waitingBody:
-        "This is not a bid generator. Choose the period you want to check, and the app shows roughly where the bank's margin starts looking thin.",
+        "The app shows where the bank's margin starts looking thin.",
       question: "Which binding period do you want to check?",
       body:
-        "Compare the period you are considering with listed bank rates and a CAISSE-based market proxy.",
+        "Compare listed rates with a CAISSE-based market proxy.",
       negotiationRange: "thin-margin check",
       rangeBodyStart: "The model midpoint is",
       rangeBodyMiddle: "It is about",
       rangeBodyEnd:
-        "from the median listed rate in this duration bucket. Use it as a checkpoint, not as a guaranteed offer or the bank's actual break-even point.",
+        "from the median listed rate. Use it as a checkpoint, not an offer.",
       medianListed: "Median listed",
       fundingProxy: "Market proxy",
       banksSampled: "Banks sampled",
@@ -561,18 +559,18 @@ const copy = {
       mediumConfidence: "Medium",
       lowConfidence: "Low",
       lowConfidenceNote:
-        "Few banks in the sample. Use the range as a rough signal, not a strong market level.",
+        "Few banks in the sample. Treat this as a rough signal.",
       assumptionNote:
-        "Based on listed rates, the Riksbanken/Refinitiv Stadshypotek CAISSE proxy and a simple margin model. The bank's real profitability floor can be higher or lower.",
+        "Based on listed rates, the CAISSE proxy and a simple margin model.",
       howToReadTitle: "How to read the checkpoint",
       howToReadBody:
-        "The zone is a reasonableness check, not a credit decision. It shows where the rate starts approaching a Swedish mortgage-bond proxy, not the bank's actual all-in cost.",
+        "Shows where the rate approaches the proxy, not the bank's all-in cost.",
       howToReadFloor:
-        "The lower end sits closest to the proxy and should be read as very thin margin in the model.",
+        "The lower end sits closest to the proxy.",
       howToReadMidpoint:
-        "The midpoint is a practical approximate level for judging whether an offer is near the model's margin floor.",
+        "The midpoint is the practical checkpoint.",
       howToReadCeiling:
-        "The upper end is less pressed, but still near the model's checkpoint.",
+        "The upper end is less pressed.",
       dataBehindRange: "Data behind this checkpoint",
     },
     diagnostics: {
@@ -587,20 +585,20 @@ const copy = {
     review: {
       label: "Next check",
       trust: "Data check",
-      trustBody: "See whether the snapshot and market date are fresh enough.",
+      trustBody: "Check snapshot and market dates.",
       market: "Rates",
-      marketBody: "See the rates and CAISSE proxy behind the checkpoint.",
+      marketBody: "See the rates behind the checkpoint.",
       evidence: "Compare",
-      evidenceBody: "Compare the selected binding period with other durations.",
+      evidenceBody: "Compare with other durations.",
       method: "Method",
-      methodBody: "Read what CAISSE is and how the funding proxy is built.",
+      methodBody: "See how the CAISSE proxy is built.",
     },
     freshness: {
       status: "Status",
       eyebrow: "Data freshness",
       title: "How current the data is",
       body:
-        "The dashboard is a static snapshot. Check both when the snapshot was exported and the latest market date inside it.",
+        "Check export time and latest market date.",
       fresh: "Current",
       watch: "Watch",
       stale: "Stale",
@@ -618,7 +616,7 @@ const copy = {
     sources: {
       title: "Sources behind the data points",
       body:
-        "These links point to the public sources and references used for rates, bank comparisons and margin context.",
+        "Public sources for rates, bank comparisons and method.",
       empty: "No public source links are included in this snapshot.",
       usedFor: "Used for",
       source: "Source",
@@ -629,12 +627,12 @@ const copy = {
       eyebrow: "Under the hood",
       title: "How raw data becomes a decision aid",
       body:
-        "This app is also a data engineering case study: public raw sources are modeled in dbt, checked in CI and exported as a small public JSON snapshot that is cheap to serve.",
+        "Public sources are modeled in dbt and exported as a small JSON snapshot.",
       cta: "Show the dbt pipeline",
       close: "Back to the app",
       caseStudyTitle: "Data engineering case: mortgage data as a product",
       caseStudyBody:
-        "This state leaves the mortgage flow and shows the product architecture behind it: public raw sources become staging models, mart tables, validated contracts and finally a cheap static data product.",
+        "Raw sources become staging models, marts, contracts and a static data product.",
       architectureLabel: "Pipeline DAG",
       controlsLabel: "Controls",
       handoffLabel: "Product contract",
@@ -662,22 +660,22 @@ const copy = {
         {
           title: "1. Raw data lands in the data lake",
           body:
-            "Riksbank rates, SCB data and bank published list rates land unchanged in separate raw tables with clear source separation.",
+            "Rates and list prices land unchanged in raw tables.",
         },
         {
           title: "2. dbt cleans and models",
           body:
-            "Staging models type, deduplicate and normalize names. Mart models produce daily rates, bank comparisons and funding proxies.",
+            "Staging cleans data. Marts build the app views.",
         },
         {
           title: "3. CI and contracts protect the app",
           body:
-            "The validator requires sorted time series, ordered quantiles, source links and non-empty negotiation options before anything is published.",
+            "Validation requires sorting, sources and plausible levels.",
         },
         {
           title: "4. The app gets only a curated snapshot",
           body:
-            "Public users never query Athena. GitHub Actions exports compact JSON to S3 and CloudFront, keeping the app fast and cheap.",
+            "GitHub Actions exports JSON to S3 and CloudFront.",
         },
       ],
     },
@@ -685,34 +683,34 @@ const copy = {
       eyebrow: "Important caveat",
       title: "What this app does not know about you",
       body:
-        "The app shows market context and modeled margin. It does not replace a lender's credit decision and does not know your personal risk profile.",
+        "The app does not know your risk profile or bank relationship.",
       items: [
         "Loan-to-value, income, amortization requirements and other debt.",
-        "Your relationship with the bank, savings, insurance and history.",
-        "Temporary campaigns, manual exceptions and the bank's internal risk price.",
-        "Whether you value the lowest possible rate or stability over time.",
+        "Savings, insurance and history.",
+        "Campaigns, exceptions and internal risk pricing.",
+        "Your preference for price or stability.",
       ],
     },
     fundingIntro: {
       eyebrow: "Before you pick a binding period",
       title: "What the funding proxy means",
       body:
-        "The app uses Riksbanken/Refinitiv Swedish mortgage-bond market rates as a transparent proxy for secured mortgage funding. Riksbanken describes the mortgage-bond series as Stadshypotek's CAISSE bond, so this is a market proxy, not a bank-by-bank measure of each lender's actual funding cost.",
+        "The app uses Riksbanken/Refinitiv mortgage-bond rates as a funding proxy.",
       points: [
         {
           title: "Short binding periods move faster with market rates",
           body:
-            "Variable and short mortgages are more directly affected by the policy rate and short market rates, with the covered-bond spread used as a proxy component.",
+            "Variable and short loans track short rates.",
         },
         {
           title: "Longer binding periods use the CAISSE curve proxy",
           body:
-            "Fixed mortgages are compared with government-bond yields plus the observed Stadshypotek CAISSE mortgage-bond spread.",
+            "Fixed loans use government yields plus CAISSE spread.",
         },
         {
           title: "Negotiation is mostly about the margin",
           body:
-            "The modeled gap is margin over the market proxy. Actual bank funding also depends on deposits, hedging, liquidity, capital and internal pricing.",
+            "The modeled gap is margin over the proxy.",
         },
       ],
     },
@@ -720,22 +718,22 @@ const copy = {
       eyebrow: "Funding proxy",
       title: "What CAISSE means in this app",
       body:
-        "The app's funding proxy is built from Riksbanken's public Swedish mortgage-bond series SEMB2YCACOMB and SEMB5YCACOMB. Riksbanken groups them as Swedish mortgage bonds, its API metadata identifies Refinitiv as the source, and its market-rate explainer describes the mortgage-bond series as Stadshypotek's bond, CAISSE.",
+        "The proxy uses Riksbanken's SEMB2YCACOMB and SEMB5YCACOMB, sourced from Refinitiv.",
       points: [
         {
           title: "Stadshypotek is linked to Handelsbanken",
           body:
-            "Stadshypotek AB is Handelsbanken's mortgage institution and a wholly owned subsidiary. The series should not be read as an all-bank Swedish funding average.",
+            "Stadshypotek is Handelsbanken's mortgage institution, not an all-bank average.",
         },
         {
           title: "CAISSE is a market benchmark",
           body:
-            "Nasdaq documentation also shows 2Y and 5Y Stadshypotek futures, with delivery of Stadshypotek bonds near the relevant maturity. So CAISSE is best understood as a benchmark complex, not just a simple cash-bond observation.",
+            "Nasdaq also lists 2Y and 5Y Stadshypotek futures.",
         },
         {
           title: "It is not the bank's actual funding cost",
           body:
-            "The app uses it as an observable market proxy. A bank's real funding cost also depends on deposits, hedging, liquidity requirements, capital, issuance mix and internal transfer pricing.",
+            "Real funding also depends on deposits, hedges and capital.",
         },
       ],
       linksTitle: "Primary sources",
