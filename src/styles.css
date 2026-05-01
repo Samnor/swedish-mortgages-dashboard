@@ -231,11 +231,7 @@ code {
 
 .review-panel {
   margin-bottom: 18px;
-  padding: 24px;
-  border: 1px solid rgba(23, 33, 31, 0.14);
-  border-radius: 30px;
-  background: rgba(255, 252, 244, 0.82);
-  box-shadow: 0 24px 60px rgba(80, 63, 43, 0.1);
+  padding: 8px 0 0;
 }
 
 .review-header {
@@ -244,6 +240,9 @@ code {
   gap: 18px;
   align-items: end;
   margin-bottom: 18px;
+  padding: 18px 0;
+  border-top: 1px solid rgba(23, 33, 31, 0.12);
+  border-bottom: 1px solid rgba(23, 33, 31, 0.12);
 }
 
 .review-header h2 {
@@ -257,7 +256,7 @@ code {
   padding: 6px;
   border: 1px solid rgba(23, 33, 31, 0.12);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 252, 244, 0.7);
 }
 
 .review-tab {
@@ -464,6 +463,15 @@ code {
 .range-card p,
 .range-card .eyebrow {
   color: inherit;
+}
+
+.range-card h2 {
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  letter-spacing: -0.035em;
+}
+
+.range-card p {
+  font-size: 1rem;
 }
 
 .range-card-empty {

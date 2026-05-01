@@ -225,10 +225,10 @@ const copy = {
       chart3: "Diagram 3",
       marketPressure: "Marknadstryck",
       marketPressureDescription:
-        "Styrränta och Riksbanken/Refinitiv CAISSE-proxy bakom marginalzonen.",
+        "Styrränta och Riksbanken/Refinitiv CAISSE-proxy bakom kontrollpunkten.",
       durationComparison: "Din bindningstid mot alternativen",
       durationComparisonDescription:
-        "Bankernas medianräntor och modellens tunn-marginalzon över bindningstider.",
+        "Bankernas medianräntor och modellens kontrollpunkt över bindningstider.",
       fundingMargin: "Marginalen över proxyn",
       fundingMarginDescription:
         "Separera CAISSE-baserad marknadsproxy från marginalen i observerade räntor.",
@@ -253,17 +253,17 @@ const copy = {
       noDataTitle: "Ingen förhandlingsdata än.",
       noDataBody:
         "Appen har räntehistorik, men inga bindningstidsspecifika bankjämförelser i denna snapshot.",
-      waitingTitle: "Välj en bindningstid för att se marginalzonen.",
+      waitingTitle: "Välj bindningstid för att köra kontrollen.",
       waitingBody:
-        "Vi visar inte ett förvalt bud. Välj hur länge du funderar på att binda lånet, så räknar appen fram var räntan börjar närma sig finansieringsproxyn.",
-      question: "Hur länge vill du binda bolånet?",
+        "Det här är inte en budgenerator. Välj bindningstiden du vill kontrollera, så visar appen ungefär var bankens marginal börjar se tunn ut.",
+      question: "Vilken bindningstid vill du kontrollera?",
       body:
-        "Välj bindningstiden du överväger. Appen jämför bankernas listräntor med en CAISSE-baserad marknadsproxy för att visa när marginalen börjar bli tunn.",
-      negotiationRange: "marginalzon",
-      rangeBodyStart: "Modellen placerar tunn-marginalzonen vid",
-      rangeBodyMiddle: "som mittpunkt. Det är ungefär",
+        "Jämför bindningstiden du överväger med bankernas listräntor och en CAISSE-baserad marknadsproxy.",
+      negotiationRange: "tunn marginal",
+      rangeBodyStart: "Modellens mittpunkt är",
+      rangeBodyMiddle: "Den ligger ungefär",
       rangeBodyEnd:
-        "mot medianlisträntan i denna bindningstid. Det är en sanity check, inte ett garanterat erbjudande eller bankens faktiska smärtgräns.",
+        "från medianlisträntan i denna bindningstid. Använd den som en kontrollpunkt, inte som ett erbjudande eller bankens faktiska smärtgräns.",
       medianListed: "Median listad",
       fundingProxy: "Marknadsproxy",
       banksSampled: "Banker i urvalet",
@@ -275,8 +275,8 @@ const copy = {
       lowConfidenceNote:
         "Få banker i urvalet. Använd intervallet som grov signal, inte som stark marknadsnivå.",
       assumptionNote:
-        "Bygger på listräntor, Riksbanken/Refinitiv Stadshypotek CAISSE-proxy och en enkel marginalmodell. Bankens verkliga lönsamhetsgräns kan ligga högre eller lägre.",
-      howToReadTitle: "Så läser du marginalzonen",
+        "Bygger på listräntor, Riksbanken/Refinitiv Stadshypotek CAISSE-proxy och en enkel marginalmodell. Bankens verkliga break-even kan ligga högre eller lägre.",
+      howToReadTitle: "Så läser du kontrollpunkten",
       howToReadBody:
         "Zonen är ett rimlighetstest, inte ett kreditbeslut. Den visar var räntan börjar närma sig en svensk bolåneobligationsproxy, inte bankens faktiska totalkostnad.",
       howToReadFloor:
@@ -284,8 +284,8 @@ const copy = {
       howToReadMidpoint:
         "Mitten är en praktisk ungefärlig nivå för att förstå om ett erbjudande är nära modellens marginalgolv.",
       howToReadCeiling:
-        "Övre delen är mindre pressad, men fortfarande nära den modellerade tunn-marginalzonen.",
-      dataBehindRange: "Data bakom marginalzonen",
+        "Övre delen är mindre pressad, men fortfarande nära modellens kontrollpunkt.",
+      dataBehindRange: "Data bakom kontrollpunkten",
     },
     diagnostics: {
       title: "Data- och appdiagnostik",
@@ -297,15 +297,15 @@ const copy = {
       unavailable: "saknas",
     },
     review: {
-      label: "Fördjupa",
-      trust: "Tillit",
-      trustBody: "Kontrollera färskhet, urval och viktiga begränsningar.",
-      market: "Marknad",
-      marketBody: "Se ränteläget och CAISSE-proxyn bakom marginalzonen.",
-      evidence: "Diagram",
-      evidenceBody: "Jämför vald bindningstid med övriga alternativ.",
+      label: "Nästa kontroll",
+      trust: "Datakoll",
+      trustBody: "Se om snapshoten och marknadsdatumet är tillräckligt färska.",
+      market: "Räntor",
+      marketBody: "Se räntorna och CAISSE-proxyn bakom kontrollpunkten.",
+      evidence: "Jämför",
+      evidenceBody: "Jämför vald bindningstid med andra bindningstider.",
       method: "Metod",
-      methodBody: "Läs hur finansieringsproxyn och CAISSE används.",
+      methodBody: "Läs vad CAISSE är och hur finansieringsproxyn byggs.",
     },
     freshness: {
       status: "Status",
@@ -353,7 +353,7 @@ const copy = {
       metrics: [
         { label: "Publik runtime", value: "S3 + CloudFront" },
         { label: "Appkontrakt", value: "latest.json" },
-        { label: "Lokal komplexitet", value: "max 3" },
+        { label: "Lokal komplexitet", value: "max 4" },
       ],
       controls: [
         "Källänkar måste följa med publika datapunkter.",
@@ -513,10 +513,10 @@ const copy = {
       chart3: "Chart 3",
       marketPressure: "Market pressure",
       marketPressureDescription:
-        "Policy rate and Riksbanken/Refinitiv CAISSE proxy behind the margin zone.",
+        "Policy rate and Riksbanken/Refinitiv CAISSE proxy behind the checkpoint.",
       durationComparison: "Your duration against alternatives",
       durationComparisonDescription:
-        "Median listed bank rates and the model's thin-margin zone across binding periods.",
+        "Median listed bank rates and the model's checkpoint across binding periods.",
       fundingMargin: "Margin over the proxy",
       fundingMarginDescription:
         "Separates the CAISSE-based market proxy from the margin implied by observed rates.",
@@ -541,17 +541,17 @@ const copy = {
       noDataTitle: "No negotiation data yet.",
       noDataBody:
         "The app has rate history, but no duration-specific bank comparison rows in this snapshot.",
-      waitingTitle: "Pick a binding period to see the margin zone.",
+      waitingTitle: "Choose a binding period to run the check.",
       waitingBody:
-        "The app does not show a default bid. Choose the period you are considering first, then it estimates where the rate starts approaching the funding proxy.",
-      question: "How long do you want to bind your mortgage?",
+        "This is not a bid generator. Choose the period you want to check, and the app shows roughly where the bank's margin starts looking thin.",
+      question: "Which binding period do you want to check?",
       body:
-        "Pick the duration you are considering. The app compares listed bank rates with a CAISSE-based market proxy to show where the margin starts to look thin.",
-      negotiationRange: "margin zone",
-      rangeBodyStart: "The model puts the thin-margin zone at",
-      rangeBodyMiddle: "as the midpoint. That is roughly",
+        "Compare the period you are considering with listed bank rates and a CAISSE-based market proxy.",
+      negotiationRange: "thin-margin check",
+      rangeBodyStart: "The model midpoint is",
+      rangeBodyMiddle: "It is about",
       rangeBodyEnd:
-        "relative to the median listed rate in this duration bucket. It is a sanity check, not a guaranteed offer or the bank's actual break-even point.",
+        "from the median listed rate in this duration bucket. Use it as a checkpoint, not as a guaranteed offer or the bank's actual break-even point.",
       medianListed: "Median listed",
       fundingProxy: "Market proxy",
       banksSampled: "Banks sampled",
@@ -564,7 +564,7 @@ const copy = {
         "Few banks in the sample. Use the range as a rough signal, not a strong market level.",
       assumptionNote:
         "Based on listed rates, the Riksbanken/Refinitiv Stadshypotek CAISSE proxy and a simple margin model. The bank's real profitability floor can be higher or lower.",
-      howToReadTitle: "How to read the margin zone",
+      howToReadTitle: "How to read the checkpoint",
       howToReadBody:
         "The zone is a reasonableness check, not a credit decision. It shows where the rate starts approaching a Swedish mortgage-bond proxy, not the bank's actual all-in cost.",
       howToReadFloor:
@@ -572,8 +572,8 @@ const copy = {
       howToReadMidpoint:
         "The midpoint is a practical approximate level for judging whether an offer is near the model's margin floor.",
       howToReadCeiling:
-        "The upper end is less pressed, but still near the modeled thin-margin zone.",
-      dataBehindRange: "Data behind this margin zone",
+        "The upper end is less pressed, but still near the model's checkpoint.",
+      dataBehindRange: "Data behind this checkpoint",
     },
     diagnostics: {
       title: "Data and app diagnostics",
@@ -585,15 +585,15 @@ const copy = {
       unavailable: "n/a",
     },
     review: {
-      label: "Inspect",
-      trust: "Trust",
-      trustBody: "Check freshness, sample size and the main caveats.",
-      market: "Market",
-      marketBody: "See the rate context and CAISSE proxy behind the margin zone.",
-      evidence: "Charts",
-      evidenceBody: "Compare the selected binding period with the alternatives.",
+      label: "Next check",
+      trust: "Data check",
+      trustBody: "See whether the snapshot and market date are fresh enough.",
+      market: "Rates",
+      marketBody: "See the rates and CAISSE proxy behind the checkpoint.",
+      evidence: "Compare",
+      evidenceBody: "Compare the selected binding period with other durations.",
       method: "Method",
-      methodBody: "Read how the funding proxy and CAISSE are used.",
+      methodBody: "Read what CAISSE is and how the funding proxy is built.",
     },
     freshness: {
       status: "Status",
@@ -641,7 +641,7 @@ const copy = {
       metrics: [
         { label: "Public runtime", value: "S3 + CloudFront" },
         { label: "App contract", value: "latest.json" },
-        { label: "Local complexity", value: "max 3" },
+        { label: "Local complexity", value: "max 4" },
       ],
       controls: [
         "Source links must travel with public data points.",
@@ -1364,9 +1364,9 @@ function renderNegotiationRangePanel(
       <div class="range-value">${escapeHtml(formatRate(range.floorRate))}-${escapeHtml(formatRate(range.ceilingRate))}</div>
       <p>
         ${escapeHtml(labels.rangeBodyStart)}
-        <strong>${escapeHtml(formatRate(range.midpointRate))}</strong>
+        <strong>${escapeHtml(formatRate(range.midpointRate))}</strong>.
         ${escapeHtml(labels.rangeBodyMiddle)}
-        <strong>${escapeHtml(formatDelta(range.discountFromMedianListRate))}</strong>
+        <strong>${escapeHtml(formatAbsoluteDelta(range.discountFromMedianListRate))}</strong>
         ${escapeHtml(labels.rangeBodyEnd)}
       </p>
       <p class="assumption-note">${escapeHtml(labels.assumptionNote)}</p>
@@ -2164,6 +2164,10 @@ function formatDelta(delta: number | null): string {
   if (delta === null) return copy[locale].diagnostics.unavailable;
   const prefix = delta > 0 ? "+" : "";
   return `${prefix}${numberFormatter().format(delta)} pp`;
+}
+
+function formatAbsoluteDelta(delta: number): string {
+  return `${numberFormatter().format(Math.abs(delta))} pp`;
 }
 
 function formatPoint(value: number): string {
