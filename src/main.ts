@@ -115,6 +115,25 @@ type AppCopy = {
     "title" | "state" | "reads" | "complexity" | "empty" | "unavailable",
     string
   >;
+  freshness: Record<
+    | "eyebrow"
+    | "title"
+    | "body"
+    | "fresh"
+    | "watch"
+    | "stale"
+    | "invalid"
+    | "generatedAt"
+    | "latestMarketDate"
+    | "snapshotAge"
+    | "marketAge"
+    | "sourceCount"
+    | "hourAgo"
+    | "hoursAgo"
+    | "dayAgo"
+    | "daysAgo",
+    string
+  >;
   sources: Record<
     | "title"
     | "body"
@@ -259,6 +278,25 @@ const copy = {
         "State machine-komplexitet: max {count} utgående övergångar per tillstånd.",
       empty: "Inga publika dashboardrader genererades",
       unavailable: "saknas",
+    },
+    freshness: {
+      eyebrow: "Datafärskhet",
+      title: "Så aktuell är datan",
+      body:
+        "Dashboarden är en statisk snapshot. Kontrollera både när snapshoten exporterades och vilket marknadsdatum som är senaste datapunkt.",
+      fresh: "Aktuell",
+      watch: "Bevaka",
+      stale: "Inaktuell",
+      invalid: "Okänd",
+      generatedAt: "Exporterad",
+      latestMarketDate: "Senaste marknadsdatum",
+      snapshotAge: "Snapshot-ålder",
+      marketAge: "Marknadsdata-ålder",
+      sourceCount: "Publika källänkar",
+      hourAgo: "1 timme sedan",
+      hoursAgo: "{count} timmar sedan",
+      dayAgo: "1 dag sedan",
+      daysAgo: "{count} dagar sedan",
     },
     sources: {
       title: "Källor bakom datapunkterna",
@@ -516,6 +554,25 @@ const copy = {
         "State machine complexity: max {count} outgoing transitions per state.",
       empty: "No public dashboard rows were generated at",
       unavailable: "n/a",
+    },
+    freshness: {
+      eyebrow: "Data freshness",
+      title: "How current the data is",
+      body:
+        "The dashboard is a static snapshot. Check both when the snapshot was exported and the latest market date inside it.",
+      fresh: "Current",
+      watch: "Watch",
+      stale: "Stale",
+      invalid: "Unknown",
+      generatedAt: "Exported",
+      latestMarketDate: "Latest market date",
+      snapshotAge: "Snapshot age",
+      marketAge: "Market data age",
+      sourceCount: "Public source links",
+      hourAgo: "1 hour ago",
+      hoursAgo: "{count} hours ago",
+      dayAgo: "1 day ago",
+      daysAgo: "{count} days ago",
     },
     sources: {
       title: "Sources behind the data points",
@@ -782,6 +839,16 @@ function renderApp(): string {
         <p>${escapeHtml(labels.heroBody)}</p>
       </section>
       ${
+        snapshot && kpis
+          ? renderFreshnessPanel(
+              labels.freshness,
+              snapshot,
+              kpis,
+              state.value === "stale" ? state.reason : null,
+            )
+          : ""
+      }
+      ${
         snapshot
           ? renderDurationFlow(
               labels.flow,
@@ -847,6 +914,114 @@ function renderLanguageToggle(labels: AppCopy): string {
       <button aria-pressed="${locale === "en"}" class="language-button" data-action="locale" data-locale="en" type="button">${escapeHtml(labels.english)}</button>
     </div>
   `;
+}
+
+type FreshnessLevel = "fresh" | "watch" | "stale" | "invalid";
+
+type FreshnessMetric = {
+  level: FreshnessLevel;
+  generatedAtLabel: string;
+  latestMarketDateLabel: string;
+  snapshotAgeLabel: string;
+  marketAgeLabel: string;
+  sourceCountLabel: string;
+};
+
+function renderFreshnessPanel(
+  labels: AppCopy["freshness"],
+  snapshot: DashboardSnapshot,
+  kpis: DashboardKpis,
+  staleReason: string | null,
+): string {
+  const metric = deriveFreshnessMetric(labels, snapshot, kpis, staleReason);
+  return `
+    <section class="freshness-panel freshness-${metric.level}" aria-label="${escapeAttr(labels.title)}">
+      <div>
+        <p class="eyebrow icon-label">${renderIcon("clock")}${escapeHtml(labels.eyebrow)}</p>
+        <h2>${escapeHtml(labels.title)}</h2>
+        <p>${escapeHtml(labels.body)}</p>
+        ${staleReason ? `<p class="freshness-reason">${escapeHtml(staleReason)}</p>` : ""}
+      </div>
+      <dl class="freshness-grid">
+        ${renderFreshnessDetail(labels.generatedAt, metric.generatedAtLabel)}
+        ${renderFreshnessDetail(labels.latestMarketDate, metric.latestMarketDateLabel)}
+        ${renderFreshnessDetail(labels.snapshotAge, metric.snapshotAgeLabel)}
+        ${renderFreshnessDetail(labels.marketAge, metric.marketAgeLabel)}
+        ${renderFreshnessDetail(labels.sourceCount, metric.sourceCountLabel)}
+        ${renderFreshnessDetail(labels.eyebrow, labels[metric.level], `freshness-badge freshness-badge-${metric.level}`)}
+      </dl>
+    </section>
+  `;
+}
+
+function renderFreshnessDetail(
+  label: string,
+  value: string,
+  valueClass = "",
+): string {
+  return `
+    <div>
+      <dt>${escapeHtml(label)}</dt>
+      <dd class="${escapeAttr(valueClass)}">${escapeHtml(value)}</dd>
+    </div>
+  `;
+}
+
+function deriveFreshnessMetric(
+  labels: AppCopy["freshness"],
+  snapshot: DashboardSnapshot,
+  kpis: DashboardKpis,
+  staleReason: string | null,
+): FreshnessMetric {
+  const generatedAt = Date.parse(snapshot.generatedAt);
+  const marketDate = Date.parse(`${kpis.latestDate}T00:00:00Z`);
+  const snapshotAgeHours = Number.isNaN(generatedAt)
+    ? null
+    : Math.max(0, Math.floor((Date.now() - generatedAt) / 1000 / 60 / 60));
+  const marketAgeDays = Number.isNaN(marketDate)
+    ? null
+    : Math.max(0, Math.floor((Date.now() - marketDate) / 1000 / 60 / 60 / 24));
+
+  let level: FreshnessLevel = "fresh";
+  if (staleReason || snapshotAgeHours === null || marketAgeDays === null) {
+    level = staleReason ? "stale" : "invalid";
+  } else if (snapshotAgeHours > 36 || marketAgeDays > 7) {
+    level = "stale";
+  } else if (snapshotAgeHours > 24 || marketAgeDays > 4) {
+    level = "watch";
+  }
+
+  return {
+    level,
+    generatedAtLabel: Number.isNaN(generatedAt)
+      ? copy[locale].diagnostics.unavailable
+      : new Intl.DateTimeFormat(locale === "sv" ? "sv-SE" : "en-US", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }).format(new Date(generatedAt)),
+    latestMarketDateLabel: Number.isNaN(marketDate)
+      ? copy[locale].diagnostics.unavailable
+      : new Intl.DateTimeFormat(locale === "sv" ? "sv-SE" : "en-US", {
+          dateStyle: "medium",
+        }).format(new Date(marketDate)),
+    snapshotAgeLabel:
+      snapshotAgeHours === null
+        ? copy[locale].diagnostics.unavailable
+        : formatFreshnessAge(snapshotAgeHours, labels.hourAgo, labels.hoursAgo),
+    marketAgeLabel:
+      marketAgeDays === null
+        ? copy[locale].diagnostics.unavailable
+        : formatFreshnessAge(marketAgeDays, labels.dayAgo, labels.daysAgo),
+    sourceCountLabel: String(snapshot.sourceLinks.length),
+  };
+}
+
+function formatFreshnessAge(
+  count: number,
+  singularLabel: string,
+  pluralLabel: string,
+): string {
+  return count === 1 ? singularLabel : pluralLabel.replace("{count}", String(count));
 }
 
 function renderFundingIntro(labels: AppCopy["fundingIntro"]): string {

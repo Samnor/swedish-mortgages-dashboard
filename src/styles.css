@@ -131,6 +131,104 @@ code {
   vertical-align: -0.08em;
 }
 
+.freshness-panel {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.4fr);
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 24px;
+  border: 1px solid rgba(23, 33, 31, 0.14);
+  border-left: 6px solid #2d5f5d;
+  border-radius: 28px;
+  background: rgba(255, 252, 244, 0.82);
+  box-shadow: 0 18px 42px rgba(80, 63, 43, 0.08);
+}
+
+.freshness-watch {
+  border-left-color: #875514;
+}
+
+.freshness-stale,
+.freshness-invalid {
+  border-left-color: #9d3422;
+}
+
+.freshness-panel h2 {
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+}
+
+.freshness-panel p {
+  margin-bottom: 0;
+}
+
+.freshness-reason {
+  padding: 10px 12px;
+  border: 1px solid rgba(157, 52, 34, 0.2);
+  border-radius: 14px;
+  background: rgba(157, 52, 34, 0.08);
+  color: #743a22;
+  font-family: "Courier New", monospace;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.freshness-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.freshness-grid div {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(23, 33, 31, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.freshness-grid dt {
+  margin-bottom: 8px;
+  color: #53615d;
+  font-family: "Courier New", monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.freshness-grid dd {
+  margin: 0;
+  color: #17211f;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.freshness-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(45, 95, 93, 0.12);
+  color: #2d5f5d;
+  font-family: "Courier New", monospace;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.freshness-badge-watch {
+  background: rgba(135, 85, 20, 0.12);
+  color: #875514;
+}
+
+.freshness-badge-stale,
+.freshness-badge-invalid {
+  background: rgba(157, 52, 34, 0.12);
+  color: #9d3422;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1245,6 +1343,11 @@ code {
   }
 
   .funding-intro {
+    grid-template-columns: 1fr;
+  }
+
+  .freshness-panel,
+  .freshness-grid {
     grid-template-columns: 1fr;
   }
 
