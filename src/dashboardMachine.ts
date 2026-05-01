@@ -1,6 +1,7 @@
 export type RatePoint = {
   date: string;
   policyRate: number;
+  mortgageBond2y: number;
   mortgageBond5y: number;
 };
 
@@ -37,8 +38,10 @@ export type DashboardSnapshot = {
 export type DashboardKpis = {
   latestDate: string;
   latestPolicyRate: number;
+  latestMortgageBond2y: number;
   latestMortgageBond5y: number;
   policyRateChange30d: number | null;
+  mortgageBond2yChange30d: number | null;
   mortgageBond5yChange30d: number | null;
 };
 
@@ -148,9 +151,13 @@ export function deriveDashboardKpis(
   return {
     latestDate: latest.date,
     latestPolicyRate: latest.policyRate,
+    latestMortgageBond2y: latest.mortgageBond2y,
     latestMortgageBond5y: latest.mortgageBond5y,
     policyRateChange30d: comparison
       ? roundRateDelta(latest.policyRate - comparison.policyRate)
+      : null,
+    mortgageBond2yChange30d: comparison
+      ? roundRateDelta(latest.mortgageBond2y - comparison.mortgageBond2y)
       : null,
     mortgageBond5yChange30d: comparison
       ? roundRateDelta(latest.mortgageBond5y - comparison.mortgageBond5y)
@@ -289,13 +296,18 @@ function parseRatePoint(input: unknown): RatePoint {
 
   const date = readString(input, "date");
   const policyRate = readNumber(input, "policyRate", "policy_rate");
+  const mortgageBond2y = readNumber(
+    input,
+    "mortgageBond2y",
+    "mortgage_bond_2y",
+  );
   const mortgageBond5y = readNumber(
     input,
     "mortgageBond5y",
     "mortgage_bond_5y",
   );
 
-  return { date, policyRate, mortgageBond5y };
+  return { date, policyRate, mortgageBond2y, mortgageBond5y };
 }
 
 function parseNegotiationOption(input: unknown): NegotiationOption {
@@ -437,7 +449,7 @@ function validateDashboardSnapshot(snapshot: DashboardSnapshot): void {
     }
 
     if (option.medianFundingCost > option.maxListRate) {
-      throw new Error("Funding proxy is above the maximum listed rate.");
+      throw new Error("Market funding proxy is above the maximum listed rate.");
     }
   }
 }

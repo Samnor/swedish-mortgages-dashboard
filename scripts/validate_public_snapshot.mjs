@@ -34,6 +34,7 @@ snapshot.rates.forEach((row, index) => {
   assertRecord(row, `rates[${index}]`);
   assertDateOnly(row.date, `rates[${index}].date`);
   assertFiniteNumber(row.policyRate, `rates[${index}].policyRate`);
+  assertFiniteNumber(row.mortgageBond2y, `rates[${index}].mortgageBond2y`);
   assertFiniteNumber(row.mortgageBond5y, `rates[${index}].mortgageBond5y`);
 
   if (previousDate && row.date < previousDate) {

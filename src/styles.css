@@ -482,6 +482,147 @@ code {
   line-height: 1.45;
 }
 
+.caisse-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.35fr);
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 28px;
+  border: 1px solid rgba(23, 33, 31, 0.14);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(23, 33, 31, 0.94), rgba(47, 63, 58, 0.92)),
+    radial-gradient(circle at 0% 0%, rgba(247, 197, 120, 0.18), transparent 18rem);
+  box-shadow: 0 24px 60px rgba(23, 33, 31, 0.18);
+}
+
+.caisse-panel .eyebrow,
+.caisse-panel h2,
+.caisse-links strong {
+  color: #f7c578;
+}
+
+.caisse-panel h2 {
+  max-width: 680px;
+}
+
+.caisse-panel p {
+  color: rgba(251, 244, 231, 0.82);
+}
+
+.caisse-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.caisse-point {
+  padding: 16px;
+  border: 1px solid rgba(251, 244, 231, 0.14);
+  border-radius: 14px;
+  background: rgba(251, 244, 231, 0.06);
+}
+
+.caisse-point strong {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #fbf4e7;
+  font-size: 1.02rem;
+}
+
+.caisse-point .icon {
+  width: 1.1em;
+  height: 1.1em;
+  color: #f7c578;
+}
+
+.caisse-point p {
+  margin: 8px 0 0;
+  font-size: 0.96rem;
+  line-height: 1.45;
+}
+
+.caisse-links,
+.caisse-usage {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(160px, 0.28fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding-top: 16px;
+  border-top: 1px solid rgba(251, 244, 231, 0.14);
+}
+
+.caisse-links > strong {
+  font-family: "Courier New", monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.caisse-usage > strong {
+  color: #f7c578;
+  font-family: "Courier New", monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.caisse-usage dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.caisse-usage div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(251, 244, 231, 0.14);
+  border-radius: 12px;
+  background: rgba(251, 244, 231, 0.05);
+}
+
+.caisse-usage dt {
+  margin-bottom: 6px;
+  color: #fbf4e7;
+  font-weight: 700;
+}
+
+.caisse-usage dd {
+  margin: 0;
+  color: rgba(251, 244, 231, 0.74);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.caisse-links div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.caisse-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 11px;
+  border: 1px solid rgba(247, 197, 120, 0.34);
+  border-radius: 999px;
+  color: #fbf4e7;
+  background: rgba(247, 197, 120, 0.08);
+  font-family: "Courier New", monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.caisse-links a:hover {
+  border-color: rgba(247, 197, 120, 0.72);
+  background: rgba(247, 197, 120, 0.14);
+}
+
 .pipeline-teaser,
 .pipeline-panel {
   display: grid;
@@ -1104,6 +1245,19 @@ code {
   }
 
   .funding-intro {
+    grid-template-columns: 1fr;
+  }
+
+  .caisse-panel,
+  .caisse-links {
+    grid-template-columns: 1fr;
+  }
+
+  .caisse-usage {
+    grid-template-columns: 1fr;
+  }
+
+  .caisse-usage dl {
     grid-template-columns: 1fr;
   }
 

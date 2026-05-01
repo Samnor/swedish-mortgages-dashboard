@@ -45,7 +45,12 @@ type AppCopy = {
   swedish: string;
   english: string;
   rates: Record<
-    "policyRate" | "mortgageBond5y" | "mortgageBondProxy" | "latestSourceDate" | "vs30dAgo",
+    | "policyRate"
+    | "mortgageBond2y"
+    | "mortgageBond5y"
+    | "mortgageBondProxy"
+    | "latestSourceDate"
+    | "vs30dAgo",
     string
   >;
   charts: Record<
@@ -59,7 +64,8 @@ type AppCopy = {
     | "durationComparisonDescription"
     | "fundingMargin"
     | "fundingMarginDescription"
-    | "coveredBondProxy"
+    | "coveredBondProxy2y"
+    | "coveredBondProxy5y"
     | "policyRate"
     | "target"
     | "medianListed"
@@ -141,6 +147,16 @@ type AppCopy = {
     body: string;
     points: Array<{ title: string; body: string }>;
   };
+  caisse: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    points: Array<{ title: string; body: string }>;
+    linksTitle: string;
+    links: Array<{ label: string; url: string }>;
+    usageTitle: string;
+    usage: Array<{ period: string; proxy: string }>;
+  };
   limitations: {
     eyebrow: string;
     title: string;
@@ -160,8 +176,9 @@ const copy = {
     english: "English",
     rates: {
       policyRate: "Styrränta",
-      mortgageBond5y: "5-årig bostadsobligation",
-      mortgageBondProxy: "Proxy för säkerställd obligationsfinansiering",
+      mortgageBond2y: "2-årig CAISSE-proxy",
+      mortgageBond5y: "5-årig CAISSE-proxy",
+      mortgageBondProxy: "Stadshypotek CAISSE marknadsproxy",
       latestSourceDate: "Senaste källdatum",
       vs30dAgo: "mot 30 dagar sedan",
     },
@@ -172,20 +189,21 @@ const copy = {
       chart3: "Diagram 3",
       marketPressure: "Marknadstryck",
       marketPressureDescription:
-        "Styrränta och säkerställd obligationsfinansiering bakom förhandlingsläget.",
+        "Styrränta och Riksbanken/Refinitiv CAISSE-proxy bakom förhandlingsläget.",
       durationComparison: "Din bindningstid mot alternativen",
       durationComparisonDescription:
         "Bankernas medianräntor och målintervall över bindningstider.",
       fundingMargin: "Det du förhandlar om",
       fundingMarginDescription:
-        "Separera finansieringsproxy från marginalutrymmet i observerade räntor.",
-      coveredBondProxy: "5-årig säkerställd obligationsproxy",
+        "Separera CAISSE-baserad marknadsproxy från marginalutrymmet i observerade räntor.",
+      coveredBondProxy2y: "2-årig CAISSE-proxy",
+      coveredBondProxy5y: "5-årig CAISSE-proxy",
       policyRate: "Styrränta",
       target: "mål",
       medianListed: "Median listad",
       negotiationTarget: "Förhandlingsmål",
       selected: "Vald",
-      fundingProxy: "Finansieringsproxy",
+      fundingProxy: "Marknadsproxy",
       marginRoom: "Marginalutrymme",
       floor: "Golv",
       targetLabel: "Mål",
@@ -204,14 +222,14 @@ const copy = {
         "Vi visar inte ett förvalt råd. Välj först hur länge du funderar på att binda lånet, så räknar appen fram ett intervall och rätt diagram för just den tiden.",
       question: "Hur länge vill du binda bolånet?",
       body:
-        "Välj bindningstiden du överväger. Intervallet nedan är en startpunkt för samtalet, baserad på bankernas listräntor och marknadens finansieringsproxy.",
+        "Välj bindningstiden du överväger. Intervallet nedan är en startpunkt för samtalet, baserad på bankernas listräntor och en CAISSE-baserad marknadsproxy.",
       negotiationRange: "startintervall",
       rangeBodyStart: "Använd cirka",
       rangeBodyMiddle: "som första samtalsmål. Det är ungefär",
       rangeBodyEnd:
         "under medianlisträntan i denna bindningstid. Intervallet är inte ett garanterat erbjudande.",
       medianListed: "Median listad",
-      fundingProxy: "Finansieringsproxy",
+      fundingProxy: "Marknadsproxy",
       banksSampled: "Banker i urvalet",
       latestMarketDate: "Senaste marknadsdatum",
       confidence: "Tillförlitlighet",
@@ -221,10 +239,10 @@ const copy = {
       lowConfidenceNote:
         "Få banker i urvalet. Använd intervallet som grov signal, inte som stark marknadsnivå.",
       assumptionNote:
-        "Bygger på listräntor, säkerställda obligationsproxys och en enkel marginalmodell. Faktiska kundrabatter kan avvika.",
+        "Bygger på listräntor, Riksbanken/Refinitiv Stadshypotek CAISSE-proxy och en enkel marginalmodell. Faktiska kundrabatter kan avvika.",
       howToReadTitle: "Så läser du intervallet",
       howToReadBody:
-        "Intervallet är ett samtalsverktyg, inte ett kreditbeslut. Det kombinerar bankernas publicerade listräntor med en marknadsproxy för finansieringskostnad.",
+        "Intervallet är ett samtalsverktyg, inte ett kreditbeslut. Det kombinerar bankernas publicerade listräntor med en svensk bolåneobligationsproxy, inte bankens faktiska finansieringskostnad.",
       howToReadFloor:
         "Nedre delen är aggressiv och bör ses som ett starkt förhandlingsankare.",
       howToReadMidpoint:
@@ -343,6 +361,67 @@ const copy = {
         },
       ],
     },
+    caisse: {
+      eyebrow: "Finansieringsproxy",
+      title: "Vad CAISSE betyder i appen",
+      body:
+        "Appens finansieringsproxy bygger på Riksbankens publika svenska bolåneobligationsserier SEMB2YCACOMB och SEMB5YCACOMB. Riksbanken grupperar dem som svenska bostadsobligationer, anger Refinitiv som källa i API-metadata och beskriver bolåneobligationsserien på sin förklaringssida som Stadshypoteks obligation, CAISSE.",
+      points: [
+        {
+          title: "Stadshypotek är Handelsbanken-kopplat",
+          body:
+            "Stadshypotek AB är Handelsbankens bolåneinstitut och ett helägt dotterbolag. Serien ska därför inte läsas som ett genomsnitt för alla svenska banker.",
+        },
+        {
+          title: "CAISSE är ett marknadsriktmärke",
+          body:
+            "Nasdaq-dokumentation visar även Stadshypotek-futures för 2 och 5 år, med leverans av Stadshypotek-obligationer nära respektive löptid. CAISSE-namnet hör alltså till ett benchmark-komplex, inte bara en enkel kontantobligation.",
+        },
+        {
+          title: "Det är inte bankens faktiska finansieringskostnad",
+          body:
+            "Vi använder serien som en observerbar marknadsproxy. En banks verkliga finansiering påverkas även av inlåning, hedgar, likviditetskrav, kapital, emissionsmix och intern prissättning.",
+        },
+      ],
+      linksTitle: "Primära källor",
+      links: [
+        {
+          label: "Riksbanken: sök räntor och valutakurser",
+          url: "https://www.riksbank.se/en-gb/statistics/interest-rates-and-exchange-rates/search-interest-rates-and-exchange-rates/",
+        },
+        {
+          label: "Riksbanken: serier för API",
+          url: "https://www.riksbank.se/en-gb/statistics/interest-rates-and-exchange-rates/retrieving-interest-rates-and-exchange-rates-via-api/series-for-the-api/",
+        },
+        {
+          label: "Riksbanken: svenska marknadsräntor",
+          url: "https://www.riksbank.se/en-gb/statistics/interest-rates-and-exchange-rates/explanations--interest-rates-and-exchange-rates/swedish-market-rates/",
+        },
+        {
+          label: "Nasdaq: Stadshypotek futures",
+          url: "https://www.nasdaq.com/docs/Stadshypotek%20Futures%20Product%20Sheet.pdf",
+        },
+      ],
+      usageTitle: "Så används proxyn per bindningstid",
+      usage: [
+        {
+          period: "3M och 1 år",
+          proxy: "Styrränta + SWESTR 3M-spread + 5-årig CAISSE-spread",
+        },
+        {
+          period: "2 år",
+          proxy: "2-årig statsobligation + 2-årig CAISSE-spread",
+        },
+        {
+          period: "3-4 år",
+          proxy: "Interpolering mellan 2-årig och 5-årig CAISSE-spread",
+        },
+        {
+          period: "5 år och längre",
+          proxy: "5-årig statsobligation + 5-årig CAISSE-spread",
+        },
+      ],
+    },
   },
   en: {
     appLabel: "Swedish Mortgage Intelligence",
@@ -354,8 +433,9 @@ const copy = {
     english: "English",
     rates: {
       policyRate: "Policy rate",
-      mortgageBond5y: "5Y mortgage bond",
-      mortgageBondProxy: "Covered bond funding proxy",
+      mortgageBond2y: "2Y CAISSE proxy",
+      mortgageBond5y: "5Y CAISSE proxy",
+      mortgageBondProxy: "Stadshypotek CAISSE market proxy",
       latestSourceDate: "Latest source date",
       vs30dAgo: "vs 30d ago",
     },
@@ -366,20 +446,21 @@ const copy = {
       chart3: "Chart 3",
       marketPressure: "Market pressure",
       marketPressureDescription:
-        "Policy rate and covered-bond funding context behind the negotiation.",
+        "Policy rate and Riksbanken/Refinitiv CAISSE proxy behind the negotiation.",
       durationComparison: "Your duration against alternatives",
       durationComparisonDescription:
         "Median listed bank rates and target range across binding periods.",
       fundingMargin: "What you are haggling over",
       fundingMarginDescription:
-        "Separates market funding proxy from the margin room implied by observed rates.",
-      coveredBondProxy: "5Y covered bond proxy",
+        "Separates the CAISSE-based market proxy from the margin room implied by observed rates.",
+      coveredBondProxy2y: "2Y CAISSE proxy",
+      coveredBondProxy5y: "5Y CAISSE proxy",
       policyRate: "Policy rate",
       target: "target",
       medianListed: "Median listed",
       negotiationTarget: "Negotiation target",
       selected: "Selected",
-      fundingProxy: "Funding proxy",
+      fundingProxy: "Market proxy",
       marginRoom: "Margin room",
       floor: "Floor",
       targetLabel: "Target",
@@ -398,14 +479,14 @@ const copy = {
         "The app does not show a default recommendation. Choose the period you are considering first, then it calculates the range and charts for that period.",
       question: "How long do you want to bind your mortgage?",
       body:
-        "Pick the duration you are considering. The range below is a starting point for the conversation, based on listed bank rates and market funding proxies.",
+        "Pick the duration you are considering. The range below is a starting point for the conversation, based on listed bank rates and a CAISSE-based market proxy.",
       negotiationRange: "starting range",
       rangeBodyStart: "Use around",
       rangeBodyMiddle: "as an opening target. That is roughly",
       rangeBodyEnd:
         "below the median listed rate in this duration bucket. The range is not a guaranteed offer.",
       medianListed: "Median listed",
-      fundingProxy: "Funding proxy",
+      fundingProxy: "Market proxy",
       banksSampled: "Banks sampled",
       latestMarketDate: "Latest market date",
       confidence: "Confidence",
@@ -415,10 +496,10 @@ const copy = {
       lowConfidenceNote:
         "Few banks in the sample. Use the range as a rough signal, not a strong market level.",
       assumptionNote:
-        "Based on listed rates, covered-bond proxies and a simple margin model. Actual customer discounts can differ.",
+        "Based on listed rates, the Riksbanken/Refinitiv Stadshypotek CAISSE proxy and a simple margin model. Actual customer discounts can differ.",
       howToReadTitle: "How to read the range",
       howToReadBody:
-        "The range is a conversation tool, not a credit decision. It combines published bank list rates with a market proxy for funding cost.",
+        "The range is a conversation tool, not a credit decision. It combines published bank list rates with a Swedish mortgage-bond market proxy, not the bank's actual funding cost.",
       howToReadFloor:
         "The lower end is aggressive and works best as a strong negotiation anchor.",
       howToReadMidpoint:
@@ -516,24 +597,85 @@ const copy = {
     },
     fundingIntro: {
       eyebrow: "Before you pick a binding period",
-      title: "How banks fund your mortgage, in plain language",
+      title: "What the funding proxy means",
       body:
-        "When a bank lends money for a mortgage, it does not only use money already sitting in savings accounts. The bank also borrows in financial markets, often through covered bonds backed by pools of mortgages. Your interest rate therefore has to cover the bank's own funding cost, risk and operating costs, plus the bank's margin.",
+        "The app uses Riksbanken/Refinitiv Swedish mortgage-bond market rates as a transparent proxy for secured mortgage funding. Riksbanken describes the mortgage-bond series as Stadshypotek's CAISSE bond, so this is a market proxy, not a bank-by-bank measure of each lender's actual funding cost.",
       points: [
         {
           title: "Short binding periods move faster with market rates",
           body:
-            "Variable and short mortgages are more directly affected by the policy rate and short market rates.",
+            "Variable and short mortgages are more directly affected by the policy rate and short market rates, with the covered-bond spread used as a proxy component.",
         },
         {
-          title: "Longer binding periods are priced more like longer borrowing",
+          title: "Longer binding periods use the CAISSE curve proxy",
           body:
-            "Fixed mortgages are affected more by bond yields and what investors demand to lend money for several years.",
+            "Fixed mortgages are compared with government-bond yields plus the observed Stadshypotek CAISSE mortgage-bond spread.",
         },
         {
           title: "Negotiation is mostly about the margin",
           body:
-            "The bank usually cannot remove its funding cost, but it may accept a lower margin if you are an attractive customer.",
+            "The modeled gap is margin room over the market proxy. Actual bank funding also depends on deposits, hedging, liquidity, capital and internal pricing.",
+        },
+      ],
+    },
+    caisse: {
+      eyebrow: "Funding proxy",
+      title: "What CAISSE means in this app",
+      body:
+        "The app's funding proxy is built from Riksbanken's public Swedish mortgage-bond series SEMB2YCACOMB and SEMB5YCACOMB. Riksbanken groups them as Swedish mortgage bonds, its API metadata identifies Refinitiv as the source, and its market-rate explainer describes the mortgage-bond series as Stadshypotek's bond, CAISSE.",
+      points: [
+        {
+          title: "Stadshypotek is linked to Handelsbanken",
+          body:
+            "Stadshypotek AB is Handelsbanken's mortgage institution and a wholly owned subsidiary. The series should not be read as an all-bank Swedish funding average.",
+        },
+        {
+          title: "CAISSE is a market benchmark",
+          body:
+            "Nasdaq documentation also shows 2Y and 5Y Stadshypotek futures, with delivery of Stadshypotek bonds near the relevant maturity. So CAISSE is best understood as a benchmark complex, not just a simple cash-bond observation.",
+        },
+        {
+          title: "It is not the bank's actual funding cost",
+          body:
+            "The app uses it as an observable market proxy. A bank's real funding cost also depends on deposits, hedging, liquidity requirements, capital, issuance mix and internal transfer pricing.",
+        },
+      ],
+      linksTitle: "Primary sources",
+      links: [
+        {
+          label: "Riksbanken: search interest rates",
+          url: "https://www.riksbank.se/en-gb/statistics/interest-rates-and-exchange-rates/search-interest-rates-and-exchange-rates/",
+        },
+        {
+          label: "Riksbanken: API series list",
+          url: "https://www.riksbank.se/en-gb/statistics/interest-rates-and-exchange-rates/retrieving-interest-rates-and-exchange-rates-via-api/series-for-the-api/",
+        },
+        {
+          label: "Riksbanken: Swedish market rates",
+          url: "https://www.riksbank.se/en-gb/statistics/interest-rates-and-exchange-rates/explanations--interest-rates-and-exchange-rates/swedish-market-rates/",
+        },
+        {
+          label: "Nasdaq: Stadshypotek futures",
+          url: "https://www.nasdaq.com/docs/Stadshypotek%20Futures%20Product%20Sheet.pdf",
+        },
+      ],
+      usageTitle: "How the proxy is used by binding period",
+      usage: [
+        {
+          period: "3M and 1Y",
+          proxy: "Policy rate + SWESTR 3M spread + 5Y CAISSE spread",
+        },
+        {
+          period: "2Y",
+          proxy: "2Y government bond + 2Y CAISSE spread",
+        },
+        {
+          period: "3Y-4Y",
+          proxy: "Interpolation between the 2Y and 5Y CAISSE spread",
+        },
+        {
+          period: "5Y and longer",
+          proxy: "5Y government bond + 5Y CAISSE spread",
         },
       ],
     },
@@ -671,6 +813,7 @@ function renderApp(): string {
           : ""
       }
       ${renderFundingIntro(labels.fundingIntro)}
+      ${renderCaisseSection(labels.caisse)}
       ${kpis && snapshot ? renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks) : ""}
       ${
         snapshot &&
@@ -730,6 +873,60 @@ function renderFundingIntro(labels: AppCopy["fundingIntro"]): string {
   `;
 }
 
+function renderCaisseSection(labels: AppCopy["caisse"]): string {
+  return `
+    <section class="caisse-panel">
+      <div class="caisse-copy">
+        <p class="eyebrow">${escapeHtml(labels.eyebrow)}</p>
+        <h2>${escapeHtml(labels.title)}</h2>
+        <p>${escapeHtml(labels.body)}</p>
+      </div>
+      <div class="caisse-grid">
+        ${labels.points
+          .map(
+            (point, index) => `
+              <article class="caisse-point">
+                <strong>${renderIcon(fundingPointIcon(index))}${escapeHtml(point.title)}</strong>
+                <p>${escapeHtml(point.body)}</p>
+              </article>
+            `,
+          )
+          .join("")}
+      </div>
+      <div class="caisse-links" aria-label="${escapeAttr(labels.linksTitle)}">
+        <strong>${escapeHtml(labels.linksTitle)}</strong>
+        <div>
+          ${labels.links
+            .map(
+              (link) => `
+                <a href="${escapeAttr(link.url)}" rel="noreferrer" target="_blank">
+                  ${renderIcon("external")}
+                  ${escapeHtml(link.label)}
+                </a>
+              `,
+            )
+            .join("")}
+        </div>
+      </div>
+      <div class="caisse-usage">
+        <strong>${escapeHtml(labels.usageTitle)}</strong>
+        <dl>
+          ${labels.usage
+            .map(
+              (row) => `
+                <div>
+                  <dt>${escapeHtml(row.period)}</dt>
+                  <dd>${escapeHtml(row.proxy)}</dd>
+                </div>
+              `,
+            )
+            .join("")}
+        </dl>
+      </div>
+    </section>
+  `;
+}
+
 function renderKpiGrid(
   kpis: DashboardKpis,
   labels: AppCopy["rates"],
@@ -745,6 +942,15 @@ function renderKpiGrid(
         labels.vs30dAgo,
         sourceById(sources, "riksbank-swea"),
         "bank",
+      )}
+      ${renderKpiCard(
+        labels.mortgageBond2y,
+        formatRate(kpis.latestMortgageBond2y),
+        labels.mortgageBondProxy,
+        kpis.mortgageBond2yChange30d,
+        labels.vs30dAgo,
+        sourceById(sources, "riksbank-swea"),
+        "bond",
       )}
       ${renderKpiCard(
         labels.mortgageBond5y,
@@ -1205,7 +1411,7 @@ function renderDiagnostics(labels: AppCopy, snapshot: DashboardSnapshot | null):
 
 function renderRatesPanel(labels: AppCopy["rates"], snapshot: DashboardSnapshot): string {
   return lineChart({
-    ariaLabel: `${labels.policyRate}, ${labels.mortgageBond5y}`,
+    ariaLabel: `${labels.policyRate}, ${labels.mortgageBond2y}, ${labels.mortgageBond5y}`,
     className: "chart",
     series: [
       {
@@ -1213,6 +1419,12 @@ function renderRatesPanel(labels: AppCopy["rates"], snapshot: DashboardSnapshot)
         valueLabel: formatRate(lastValue(snapshot.rates.map((row) => row.policyRate))),
         values: snapshot.rates.map((row) => row.policyRate),
         color: "#743a22",
+      },
+      {
+        label: labels.mortgageBond2y,
+        valueLabel: formatRate(lastValue(snapshot.rates.map((row) => row.mortgageBond2y))),
+        values: snapshot.rates.map((row) => row.mortgageBond2y),
+        color: "#58705d",
       },
       {
         label: labels.mortgageBond5y,
@@ -1231,14 +1443,18 @@ function renderMarketPressureChart(
   snapshot: DashboardSnapshot,
 ): string {
   const latestPolicyRate = lastValue(snapshot.rates.map((row) => row.policyRate));
-  const latestFundingProxy = lastValue(
+  const latestFundingProxy2y = lastValue(
+    snapshot.rates.map((row) => row.mortgageBond2y),
+  );
+  const latestFundingProxy5y = lastValue(
     snapshot.rates.map((row) => row.mortgageBond5y),
   );
 
   return (
     renderChartSummary([
       { label: labels.policyRate, value: formatRate(latestPolicyRate) },
-      { label: labels.coveredBondProxy, value: formatRate(latestFundingProxy) },
+      { label: labels.coveredBondProxy2y, value: formatRate(latestFundingProxy2y) },
+      { label: labels.coveredBondProxy5y, value: formatRate(latestFundingProxy5y) },
       {
         label: `${range.option.periodLabelDisplay} ${labels.target}`,
         value: formatRate(range.midpointRate),
@@ -1255,8 +1471,14 @@ function renderMarketPressureChart(
         color: "#743a22",
       },
       {
-        label: labels.coveredBondProxy,
-        valueLabel: formatRate(latestFundingProxy),
+        label: labels.coveredBondProxy2y,
+        valueLabel: formatRate(latestFundingProxy2y),
+        values: snapshot.rates.map((row) => row.mortgageBond2y),
+        color: "#58705d",
+      },
+      {
+        label: labels.coveredBondProxy5y,
+        valueLabel: formatRate(latestFundingProxy5y),
         values: snapshot.rates.map((row) => row.mortgageBond5y),
         color: "#2d5f5d",
       },

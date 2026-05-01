@@ -24,7 +24,7 @@ PUBLIC_SOURCE_LINKS = [
         "id": "riksbank-swea",
         "label": "Sveriges Riksbank statistics",
         "url": "https://www.riksbank.se/en-gb/statistics/search-interest--exchange-rates/",
-        "usedFor": "Policy rate, government-bond yields, covered-bond yield proxies, STIBOR and SWESTR inputs.",
+        "usedFor": "Policy rate, government-bond yields, STIBOR, SWESTR and Riksbanken/Refinitiv Stadshypotek CAISSE mortgage-bond market proxy inputs.",
     },
     {
         "id": "bank-listed-rates",
@@ -42,7 +42,7 @@ PUBLIC_SOURCE_LINKS = [
         "id": "fi-gross-margin",
         "label": "Finansinspektionen mortgage margin context",
         "url": "https://www.fi.se/sv/for-konsumenter/lana/bankernas-bruttomarginal-pa-bolan/",
-        "usedFor": "External context for mortgage gross margins and bank funding-cost discussion.",
+        "usedFor": "External context for mortgage gross margins and the distinction between market proxies and bank funding-cost discussion.",
     },
 ]
 
@@ -52,9 +52,11 @@ def rates_query(database: str, limit: int) -> str:
 select
   cast(rate_date as varchar) as date,
   cast(policy_rate as double) as policy_rate,
+  cast(mortbond_2y as double) as mortgage_bond_2y,
   cast(mortbond_5y as double) as mortgage_bond_5y
 from {database}.rates_daily
 where policy_rate is not null
+  and mortbond_2y is not null
   and mortbond_5y is not null
 order by rate_date desc
 limit {limit}
@@ -158,6 +160,7 @@ def parse_rate_rows(rows: list[dict[str, str]]) -> list[dict[str, float | str]]:
         {
             "date": row["date"],
             "policyRate": float(row["policy_rate"]),
+            "mortgageBond2y": float(row["mortgage_bond_2y"]),
             "mortgageBond5y": float(row["mortgage_bond_5y"]),
         }
         for row in rows

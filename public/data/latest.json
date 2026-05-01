@@ -1,34 +1,575 @@
 {
-  "generatedAt": "2026-04-26T17:01:43.167128+00:00",
-  "environment": "prod",
-  "source": "swedish_mortgages_prod_marts.rates_daily",
-  "queryId": "3b6ce254-d523-4e97-ae18-23c39e4370f0",
-  "negotiationSource": "swedish_mortgages_prod_marts.bank_vs_market_analysis",
-  "negotiationQueryId": "ff277a3c-89ea-47c0-a6bd-4e81c8b7191b",
+  "generatedAt": "2026-05-01T15:25:13.176259+00:00",
+  "environment": "dev",
+  "source": "swedish_mortgages_dev_marts.rates_daily",
+  "queryId": "4c2c4fac-90c6-492d-9421-f0ddd356315a",
+  "negotiationSource": "swedish_mortgages_dev_marts.bank_vs_market_analysis",
+  "negotiationQueryId": "816d54c9-fdc7-4fa9-a0f8-b2fe92170135",
+  "sourceLinks": [
+    {
+      "id": "riksbank-swea",
+      "label": "Sveriges Riksbank statistics",
+      "url": "https://www.riksbank.se/en-gb/statistics/search-interest--exchange-rates/",
+      "usedFor": "Policy rate, government-bond yields, STIBOR, SWESTR and Riksbanken/Refinitiv Stadshypotek CAISSE mortgage-bond market proxy inputs."
+    },
+    {
+      "id": "bank-listed-rates",
+      "label": "Bank published mortgage rates",
+      "url": "https://www.sbab.se/1/privat/lana/bolan/bolanerantor.html",
+      "usedFor": "Listed-rate comparison sample. Current scraper coverage includes SBAB, Nordea and Swedbank."
+    },
+    {
+      "id": "scb-rantat04n",
+      "label": "Statistics Sweden RantaT04N",
+      "url": "https://www.statistikdatabasen.scb.se/pxweb/en/ssd/START__FM__FM5001__FM5001B/RantaT04N/",
+      "usedFor": "Monthly average mortgage rates for new and outstanding loans by binding period."
+    },
+    {
+      "id": "fi-gross-margin",
+      "label": "Finansinspektionen mortgage margin context",
+      "url": "https://www.fi.se/sv/for-konsumenter/lana/bankernas-bruttomarginal-pa-bolan/",
+      "usedFor": "External context for mortgage gross margins and the distinction between market proxies and bank funding-cost discussion."
+    }
+  ],
   "rates": [
+    {
+      "date": "2025-12-09",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.44,
+      "mortgageBond5y": 3.006
+    },
+    {
+      "date": "2025-12-10",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.459,
+      "mortgageBond5y": 3.011
+    },
+    {
+      "date": "2025-12-11",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.453,
+      "mortgageBond5y": 2.999
+    },
+    {
+      "date": "2025-12-12",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.455,
+      "mortgageBond5y": 2.993
+    },
+    {
+      "date": "2025-12-15",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.423,
+      "mortgageBond5y": 2.96
+    },
+    {
+      "date": "2025-12-16",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.405,
+      "mortgageBond5y": 2.944
+    },
+    {
+      "date": "2025-12-17",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.393,
+      "mortgageBond5y": 2.933
+    },
+    {
+      "date": "2025-12-18",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.37,
+      "mortgageBond5y": 2.911
+    },
+    {
+      "date": "2025-12-19",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.373,
+      "mortgageBond5y": 2.915
+    },
+    {
+      "date": "2025-12-22",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.373,
+      "mortgageBond5y": 2.931
+    },
+    {
+      "date": "2025-12-23",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.36,
+      "mortgageBond5y": 2.893
+    },
+    {
+      "date": "2025-12-29",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.351,
+      "mortgageBond5y": 2.864
+    },
+    {
+      "date": "2025-12-30",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.337,
+      "mortgageBond5y": 2.856
+    },
+    {
+      "date": "2026-01-02",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.335,
+      "mortgageBond5y": 2.876
+    },
+    {
+      "date": "2026-01-05",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.371,
+      "mortgageBond5y": 2.905
+    },
+    {
+      "date": "2026-01-07",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.327,
+      "mortgageBond5y": 2.842
+    },
+    {
+      "date": "2026-01-08",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.3,
+      "mortgageBond5y": 2.852
+    },
+    {
+      "date": "2026-01-09",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.306,
+      "mortgageBond5y": 2.871
+    },
+    {
+      "date": "2026-01-12",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.297,
+      "mortgageBond5y": 2.854
+    },
+    {
+      "date": "2026-01-13",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.29,
+      "mortgageBond5y": 2.84
+    },
+    {
+      "date": "2026-01-14",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.273,
+      "mortgageBond5y": 2.826
+    },
+    {
+      "date": "2026-01-15",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.26,
+      "mortgageBond5y": 2.823
+    },
+    {
+      "date": "2026-01-16",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.285,
+      "mortgageBond5y": 2.857
+    },
+    {
+      "date": "2026-01-19",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.258,
+      "mortgageBond5y": 2.83
+    },
+    {
+      "date": "2026-01-20",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.254,
+      "mortgageBond5y": 2.848
+    },
+    {
+      "date": "2026-01-21",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.26,
+      "mortgageBond5y": 2.875
+    },
+    {
+      "date": "2026-01-22",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.279,
+      "mortgageBond5y": 2.874
+    },
+    {
+      "date": "2026-01-23",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.272,
+      "mortgageBond5y": 2.88
+    },
+    {
+      "date": "2026-01-26",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.253,
+      "mortgageBond5y": 2.8569
+    },
+    {
+      "date": "2026-01-27",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.223,
+      "mortgageBond5y": 2.844
+    },
+    {
+      "date": "2026-01-28",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.218,
+      "mortgageBond5y": 2.825
+    },
+    {
+      "date": "2026-01-29",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.188,
+      "mortgageBond5y": 2.776
+    },
+    {
+      "date": "2026-01-30",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.18,
+      "mortgageBond5y": 2.7569
+    },
+    {
+      "date": "2026-02-02",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.181,
+      "mortgageBond5y": 2.767
+    },
+    {
+      "date": "2026-02-03",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.203,
+      "mortgageBond5y": 2.7996
+    },
+    {
+      "date": "2026-02-04",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.134,
+      "mortgageBond5y": 2.708
+    },
+    {
+      "date": "2026-02-05",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.125,
+      "mortgageBond5y": 2.674
+    },
+    {
+      "date": "2026-02-06",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.118,
+      "mortgageBond5y": 2.677
+    },
+    {
+      "date": "2026-02-09",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.096,
+      "mortgageBond5y": 2.662
+    },
+    {
+      "date": "2026-02-10",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.078,
+      "mortgageBond5y": 2.638
+    },
+    {
+      "date": "2026-02-11",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.093,
+      "mortgageBond5y": 2.649
+    },
+    {
+      "date": "2026-02-12",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.084,
+      "mortgageBond5y": 2.617
+    },
+    {
+      "date": "2026-02-13",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.064,
+      "mortgageBond5y": 2.5812
+    },
+    {
+      "date": "2026-02-16",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.051,
+      "mortgageBond5y": 2.566
+    },
+    {
+      "date": "2026-02-17",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.054,
+      "mortgageBond5y": 2.554
+    },
+    {
+      "date": "2026-02-18",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.041,
+      "mortgageBond5y": 2.5649
+    },
+    {
+      "date": "2026-02-19",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.071,
+      "mortgageBond5y": 2.595
+    },
+    {
+      "date": "2026-02-20",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.089,
+      "mortgageBond5y": 2.605
+    },
+    {
+      "date": "2026-02-23",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.077,
+      "mortgageBond5y": 2.6055
+    },
+    {
+      "date": "2026-02-24",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.081,
+      "mortgageBond5y": 2.569
+    },
+    {
+      "date": "2026-02-25",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.06,
+      "mortgageBond5y": 2.585
+    },
+    {
+      "date": "2026-02-26",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.077,
+      "mortgageBond5y": 2.562
+    },
+    {
+      "date": "2026-02-27",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.063,
+      "mortgageBond5y": 2.527
+    },
+    {
+      "date": "2026-03-02",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.116,
+      "mortgageBond5y": 2.612
+    },
+    {
+      "date": "2026-03-03",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.226,
+      "mortgageBond5y": 2.729
+    },
+    {
+      "date": "2026-03-04",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.189,
+      "mortgageBond5y": 2.707
+    },
+    {
+      "date": "2026-03-05",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.223,
+      "mortgageBond5y": 2.755
+    },
+    {
+      "date": "2026-03-06",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.309,
+      "mortgageBond5y": 2.826
+    },
+    {
+      "date": "2026-03-09",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.425,
+      "mortgageBond5y": 2.96
+    },
+    {
+      "date": "2026-03-10",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.338,
+      "mortgageBond5y": 2.869
+    },
+    {
+      "date": "2026-03-11",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.388,
+      "mortgageBond5y": 2.922
+    },
+    {
+      "date": "2026-03-12",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.441,
+      "mortgageBond5y": 2.964
+    },
+    {
+      "date": "2026-03-13",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.441,
+      "mortgageBond5y": 2.965
+    },
+    {
+      "date": "2026-03-16",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.432,
+      "mortgageBond5y": 2.952
+    },
+    {
+      "date": "2026-03-17",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.4,
+      "mortgageBond5y": 2.918
+    },
+    {
+      "date": "2026-03-18",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.435,
+      "mortgageBond5y": 2.941
+    },
+    {
+      "date": "2026-03-19",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.575,
+      "mortgageBond5y": 3.018
+    },
+    {
+      "date": "2026-03-20",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.76,
+      "mortgageBond5y": 3.171
+    },
+    {
+      "date": "2026-03-23",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.702,
+      "mortgageBond5y": 3.115
+    },
+    {
+      "date": "2026-03-24",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.82,
+      "mortgageBond5y": 3.222
+    },
+    {
+      "date": "2026-03-25",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.776,
+      "mortgageBond5y": 3.205
+    },
+    {
+      "date": "2026-03-26",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.847,
+      "mortgageBond5y": 3.277
+    },
+    {
+      "date": "2026-03-27",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.855,
+      "mortgageBond5y": 3.304
+    },
+    {
+      "date": "2026-03-30",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.813,
+      "mortgageBond5y": 3.255
+    },
+    {
+      "date": "2026-03-31",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.749,
+      "mortgageBond5y": 3.202
+    },
+    {
+      "date": "2026-04-01",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.728,
+      "mortgageBond5y": 3.144
+    },
+    {
+      "date": "2026-04-02",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.76,
+      "mortgageBond5y": 3.215
+    },
+    {
+      "date": "2026-04-07",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.764,
+      "mortgageBond5y": 3.228
+    },
+    {
+      "date": "2026-04-08",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.522,
+      "mortgageBond5y": 2.986
+    },
+    {
+      "date": "2026-04-09",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.58,
+      "mortgageBond5y": 3.058
+    },
+    {
+      "date": "2026-04-10",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.563,
+      "mortgageBond5y": 3.0395
+    },
+    {
+      "date": "2026-04-13",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.608,
+      "mortgageBond5y": 3.0779
+    },
+    {
+      "date": "2026-04-14",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.531,
+      "mortgageBond5y": 2.9878
+    },
+    {
+      "date": "2026-04-15",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.497,
+      "mortgageBond5y": 2.9676
+    },
+    {
+      "date": "2026-04-16",
+      "policyRate": 1.75,
+      "mortgageBond2y": 2.474,
+      "mortgageBond5y": 2.9546
+    },
     {
       "date": "2026-04-17",
       "policyRate": 1.75,
+      "mortgageBond2y": 2.396,
       "mortgageBond5y": 2.8425
     },
     {
       "date": "2026-04-20",
       "policyRate": 1.75,
+      "mortgageBond2y": 2.429,
       "mortgageBond5y": 2.8896
     },
     {
       "date": "2026-04-21",
       "policyRate": 1.75,
+      "mortgageBond2y": 2.45,
       "mortgageBond5y": 2.9214
     },
     {
       "date": "2026-04-22",
       "policyRate": 1.75,
+      "mortgageBond2y": 2.484,
       "mortgageBond5y": 2.9292
     },
     {
       "date": "2026-04-23",
       "policyRate": 1.75,
+      "mortgageBond2y": 2.507,
       "mortgageBond5y": 2.9523
     }
   ],
@@ -197,32 +738,6 @@
       "lowerMargin": 0.2674,
       "upperMargin": 0.2674,
       "bankCount": 2
-    }
-  ],
-  "sourceLinks": [
-    {
-      "id": "riksbank-swea",
-      "label": "Sveriges Riksbank statistics",
-      "url": "https://www.riksbank.se/en-gb/statistics/search-interest--exchange-rates/",
-      "usedFor": "Policy rate, government-bond yields, covered-bond yield proxies, STIBOR and SWESTR inputs."
-    },
-    {
-      "id": "bank-listed-rates",
-      "label": "Bank published mortgage rates",
-      "url": "https://www.sbab.se/1/privat/lana/bolan/bolanerantor.html",
-      "usedFor": "Listed-rate comparison sample. Current scraper coverage includes SBAB, Nordea and Swedbank."
-    },
-    {
-      "id": "scb-rantat04n",
-      "label": "Statistics Sweden RantaT04N",
-      "url": "https://www.statistikdatabasen.scb.se/pxweb/en/ssd/START__FM__FM5001__FM5001B/RantaT04N/",
-      "usedFor": "Monthly average mortgage rates for new and outstanding loans by binding period."
-    },
-    {
-      "id": "fi-gross-margin",
-      "label": "Finansinspektionen mortgage margin context",
-      "url": "https://www.fi.se/sv/for-konsumenter/lana/bankernas-bruttomarginal-pa-bolan/",
-      "usedFor": "External context for mortgage gross margins and bank funding-cost discussion."
     }
   ]
 }
