@@ -2,18 +2,22 @@ import {
   confidenceForBankCount,
   deriveDashboardKpis,
   deriveNegotiationRange,
+  dashboardFreshnessLevel,
   maxOutgoingTransitions,
   parseDashboardSnapshot,
   stateComplexity,
   transition,
   type ConfidenceLevel,
   type DashboardEvent,
+  type DashboardFreshnessLevel,
   type DashboardKpis,
   type DashboardSnapshot,
   type DashboardState,
   type NegotiationOption,
   type NegotiationRange,
+  type ReviewMode,
   type SourceLink,
+  snapshotStaleReason,
 } from "./dashboardMachine";
 import "./styles.css";
 
@@ -115,7 +119,20 @@ type AppCopy = {
     "title" | "state" | "reads" | "complexity" | "empty" | "unavailable",
     string
   >;
+  review: Record<
+    | "label"
+    | "trust"
+    | "trustBody"
+    | "market"
+    | "marketBody"
+    | "evidence"
+    | "evidenceBody"
+    | "method"
+    | "methodBody",
+    string
+  >;
   freshness: Record<
+    | "status"
     | "eyebrow"
     | "title"
     | "body"
@@ -187,9 +204,9 @@ type AppCopy = {
 const copy = {
   sv: {
     appLabel: "Svensk bolånekoll",
-    heroTitle: "Marknadsläge innan du förhandlar med banken.",
+    heroTitle: "Se när bankens marginal börjar bli tunn.",
     heroBody:
-      "Välj hur länge du funderar på att binda bolånet och få ett marknadsbaserat intervall att använda inför samtalet med banken.",
+      "Välj bindningstid och gör en sanity check av ungefär var bolåneräntan närmar sig finansieringsproxyn.",
     languageLabel: "Språk",
     swedish: "Svenska",
     english: "English",
@@ -202,25 +219,25 @@ const copy = {
       vs30dAgo: "mot 30 dagar sedan",
     },
     charts: {
-      aria: "Diagram för bolåneförhandling",
+      aria: "Diagram för bolånemarginal",
       chart1: "Diagram 1",
       chart2: "Diagram 2",
       chart3: "Diagram 3",
       marketPressure: "Marknadstryck",
       marketPressureDescription:
-        "Styrränta och Riksbanken/Refinitiv CAISSE-proxy bakom förhandlingsläget.",
+        "Styrränta och Riksbanken/Refinitiv CAISSE-proxy bakom marginalzonen.",
       durationComparison: "Din bindningstid mot alternativen",
       durationComparisonDescription:
-        "Bankernas medianräntor och målintervall över bindningstider.",
-      fundingMargin: "Det du förhandlar om",
+        "Bankernas medianräntor och modellens tunn-marginalzon över bindningstider.",
+      fundingMargin: "Marginalen över proxyn",
       fundingMarginDescription:
-        "Separera CAISSE-baserad marknadsproxy från marginalutrymmet i observerade räntor.",
+        "Separera CAISSE-baserad marknadsproxy från marginalen i observerade räntor.",
       coveredBondProxy2y: "2-årig CAISSE-proxy",
       coveredBondProxy5y: "5-årig CAISSE-proxy",
       policyRate: "Styrränta",
       target: "mål",
       medianListed: "Median listad",
-      negotiationTarget: "Förhandlingsmål",
+      negotiationTarget: "Tunn marginal",
       selected: "Vald",
       fundingProxy: "Marknadsproxy",
       marginRoom: "Marginalutrymme",
@@ -236,17 +253,17 @@ const copy = {
       noDataTitle: "Ingen förhandlingsdata än.",
       noDataBody:
         "Appen har räntehistorik, men inga bindningstidsspecifika bankjämförelser i denna snapshot.",
-      waitingTitle: "Välj en bindningstid för att se ett startintervall.",
+      waitingTitle: "Välj en bindningstid för att se marginalzonen.",
       waitingBody:
-        "Vi visar inte ett förvalt råd. Välj först hur länge du funderar på att binda lånet, så räknar appen fram ett intervall och rätt diagram för just den tiden.",
+        "Vi visar inte ett förvalt bud. Välj hur länge du funderar på att binda lånet, så räknar appen fram var räntan börjar närma sig finansieringsproxyn.",
       question: "Hur länge vill du binda bolånet?",
       body:
-        "Välj bindningstiden du överväger. Intervallet nedan är en startpunkt för samtalet, baserad på bankernas listräntor och en CAISSE-baserad marknadsproxy.",
-      negotiationRange: "startintervall",
-      rangeBodyStart: "Använd cirka",
-      rangeBodyMiddle: "som första samtalsmål. Det är ungefär",
+        "Välj bindningstiden du överväger. Appen jämför bankernas listräntor med en CAISSE-baserad marknadsproxy för att visa när marginalen börjar bli tunn.",
+      negotiationRange: "marginalzon",
+      rangeBodyStart: "Modellen placerar tunn-marginalzonen vid",
+      rangeBodyMiddle: "som mittpunkt. Det är ungefär",
       rangeBodyEnd:
-        "under medianlisträntan i denna bindningstid. Intervallet är inte ett garanterat erbjudande.",
+        "mot medianlisträntan i denna bindningstid. Det är en sanity check, inte ett garanterat erbjudande eller bankens faktiska smärtgräns.",
       medianListed: "Median listad",
       fundingProxy: "Marknadsproxy",
       banksSampled: "Banker i urvalet",
@@ -258,17 +275,17 @@ const copy = {
       lowConfidenceNote:
         "Få banker i urvalet. Använd intervallet som grov signal, inte som stark marknadsnivå.",
       assumptionNote:
-        "Bygger på listräntor, Riksbanken/Refinitiv Stadshypotek CAISSE-proxy och en enkel marginalmodell. Faktiska kundrabatter kan avvika.",
-      howToReadTitle: "Så läser du intervallet",
+        "Bygger på listräntor, Riksbanken/Refinitiv Stadshypotek CAISSE-proxy och en enkel marginalmodell. Bankens verkliga lönsamhetsgräns kan ligga högre eller lägre.",
+      howToReadTitle: "Så läser du marginalzonen",
       howToReadBody:
-        "Intervallet är ett samtalsverktyg, inte ett kreditbeslut. Det kombinerar bankernas publicerade listräntor med en svensk bolåneobligationsproxy, inte bankens faktiska finansieringskostnad.",
+        "Zonen är ett rimlighetstest, inte ett kreditbeslut. Den visar var räntan börjar närma sig en svensk bolåneobligationsproxy, inte bankens faktiska totalkostnad.",
       howToReadFloor:
-        "Nedre delen är aggressiv och bör ses som ett starkt förhandlingsankare.",
+        "Nedre delen ligger närmast proxyn och bör ses som mycket tunn marginal i modellen.",
       howToReadMidpoint:
-        "Mitten är den praktiska startpunkten att säga högt i samtalet.",
+        "Mitten är en praktisk ungefärlig nivå för att förstå om ett erbjudande är nära modellens marginalgolv.",
       howToReadCeiling:
-        "Övre delen är fortfarande under medianen men mindre offensiv.",
-      dataBehindRange: "Data bakom intervallet",
+        "Övre delen är mindre pressad, men fortfarande nära den modellerade tunn-marginalzonen.",
+      dataBehindRange: "Data bakom marginalzonen",
     },
     diagnostics: {
       title: "Data- och appdiagnostik",
@@ -279,7 +296,19 @@ const copy = {
       empty: "Inga publika dashboardrader genererades",
       unavailable: "saknas",
     },
+    review: {
+      label: "Fördjupa",
+      trust: "Tillit",
+      trustBody: "Kontrollera färskhet, urval och viktiga begränsningar.",
+      market: "Marknad",
+      marketBody: "Se ränteläget och CAISSE-proxyn bakom marginalzonen.",
+      evidence: "Diagram",
+      evidenceBody: "Jämför vald bindningstid med övriga alternativ.",
+      method: "Metod",
+      methodBody: "Läs hur finansieringsproxyn och CAISSE används.",
+    },
     freshness: {
+      status: "Status",
       eyebrow: "Datafärskhet",
       title: "Så aktuell är datan",
       body:
@@ -368,7 +397,7 @@ const copy = {
       eyebrow: "Viktigt att veta",
       title: "Det här vet inte appen om dig",
       body:
-        "Appen visar marknadsläge och förhandlingsutrymme. Den ersätter inte bankens kreditprövning och känner inte till din personliga riskprofil.",
+        "Appen visar marknadsläge och modellerad marginal. Den ersätter inte bankens kreditprövning och känner inte till din personliga riskprofil.",
       items: [
         "Belåningsgrad, inkomst, amorteringskrav och övriga lån.",
         "Din relation till banken, sparande, försäkringar och historik.",
@@ -462,10 +491,10 @@ const copy = {
     },
   },
   en: {
-    appLabel: "Swedish Mortgage Intelligence",
-    heroTitle: "Market context before you negotiate with a lender.",
+    appLabel: "Swedish Mortgage Guide",
+    heroTitle: "See where the bank's margin starts to look thin.",
     heroBody:
-      "Pick the binding period you are considering and get a market-informed range to use before talking to a lender.",
+      "Pick a binding period and sanity-check roughly where the mortgage rate approaches the funding proxy.",
     languageLabel: "Language",
     swedish: "Svenska",
     english: "English",
@@ -478,25 +507,25 @@ const copy = {
       vs30dAgo: "vs 30d ago",
     },
     charts: {
-      aria: "Mortgage negotiation charts",
+      aria: "Mortgage margin charts",
       chart1: "Chart 1",
       chart2: "Chart 2",
       chart3: "Chart 3",
       marketPressure: "Market pressure",
       marketPressureDescription:
-        "Policy rate and Riksbanken/Refinitiv CAISSE proxy behind the negotiation.",
+        "Policy rate and Riksbanken/Refinitiv CAISSE proxy behind the margin zone.",
       durationComparison: "Your duration against alternatives",
       durationComparisonDescription:
-        "Median listed bank rates and target range across binding periods.",
-      fundingMargin: "What you are haggling over",
+        "Median listed bank rates and the model's thin-margin zone across binding periods.",
+      fundingMargin: "Margin over the proxy",
       fundingMarginDescription:
-        "Separates the CAISSE-based market proxy from the margin room implied by observed rates.",
+        "Separates the CAISSE-based market proxy from the margin implied by observed rates.",
       coveredBondProxy2y: "2Y CAISSE proxy",
       coveredBondProxy5y: "5Y CAISSE proxy",
       policyRate: "Policy rate",
       target: "target",
       medianListed: "Median listed",
-      negotiationTarget: "Negotiation target",
+      negotiationTarget: "Thin margin",
       selected: "Selected",
       fundingProxy: "Market proxy",
       marginRoom: "Margin room",
@@ -512,17 +541,17 @@ const copy = {
       noDataTitle: "No negotiation data yet.",
       noDataBody:
         "The app has rate history, but no duration-specific bank comparison rows in this snapshot.",
-      waitingTitle: "Pick a binding period to see a starting range.",
+      waitingTitle: "Pick a binding period to see the margin zone.",
       waitingBody:
-        "The app does not show a default recommendation. Choose the period you are considering first, then it calculates the range and charts for that period.",
+        "The app does not show a default bid. Choose the period you are considering first, then it estimates where the rate starts approaching the funding proxy.",
       question: "How long do you want to bind your mortgage?",
       body:
-        "Pick the duration you are considering. The range below is a starting point for the conversation, based on listed bank rates and a CAISSE-based market proxy.",
-      negotiationRange: "starting range",
-      rangeBodyStart: "Use around",
-      rangeBodyMiddle: "as an opening target. That is roughly",
+        "Pick the duration you are considering. The app compares listed bank rates with a CAISSE-based market proxy to show where the margin starts to look thin.",
+      negotiationRange: "margin zone",
+      rangeBodyStart: "The model puts the thin-margin zone at",
+      rangeBodyMiddle: "as the midpoint. That is roughly",
       rangeBodyEnd:
-        "below the median listed rate in this duration bucket. The range is not a guaranteed offer.",
+        "relative to the median listed rate in this duration bucket. It is a sanity check, not a guaranteed offer or the bank's actual break-even point.",
       medianListed: "Median listed",
       fundingProxy: "Market proxy",
       banksSampled: "Banks sampled",
@@ -534,17 +563,17 @@ const copy = {
       lowConfidenceNote:
         "Few banks in the sample. Use the range as a rough signal, not a strong market level.",
       assumptionNote:
-        "Based on listed rates, the Riksbanken/Refinitiv Stadshypotek CAISSE proxy and a simple margin model. Actual customer discounts can differ.",
-      howToReadTitle: "How to read the range",
+        "Based on listed rates, the Riksbanken/Refinitiv Stadshypotek CAISSE proxy and a simple margin model. The bank's real profitability floor can be higher or lower.",
+      howToReadTitle: "How to read the margin zone",
       howToReadBody:
-        "The range is a conversation tool, not a credit decision. It combines published bank list rates with a Swedish mortgage-bond market proxy, not the bank's actual funding cost.",
+        "The zone is a reasonableness check, not a credit decision. It shows where the rate starts approaching a Swedish mortgage-bond proxy, not the bank's actual all-in cost.",
       howToReadFloor:
-        "The lower end is aggressive and works best as a strong negotiation anchor.",
+        "The lower end sits closest to the proxy and should be read as very thin margin in the model.",
       howToReadMidpoint:
-        "The midpoint is the practical opening target to say out loud.",
+        "The midpoint is a practical approximate level for judging whether an offer is near the model's margin floor.",
       howToReadCeiling:
-        "The upper end is still below the median, but less ambitious.",
-      dataBehindRange: "Data behind this range",
+        "The upper end is less pressed, but still near the modeled thin-margin zone.",
+      dataBehindRange: "Data behind this margin zone",
     },
     diagnostics: {
       title: "Data and app diagnostics",
@@ -555,7 +584,19 @@ const copy = {
       empty: "No public dashboard rows were generated at",
       unavailable: "n/a",
     },
+    review: {
+      label: "Inspect",
+      trust: "Trust",
+      trustBody: "Check freshness, sample size and the main caveats.",
+      market: "Market",
+      marketBody: "See the rate context and CAISSE proxy behind the margin zone.",
+      evidence: "Charts",
+      evidenceBody: "Compare the selected binding period with the alternatives.",
+      method: "Method",
+      methodBody: "Read how the funding proxy and CAISSE are used.",
+    },
     freshness: {
+      status: "Status",
       eyebrow: "Data freshness",
       title: "How current the data is",
       body:
@@ -644,7 +685,7 @@ const copy = {
       eyebrow: "Important caveat",
       title: "What this app does not know about you",
       body:
-        "The app shows market context and negotiation room. It does not replace a lender's credit decision and does not know your personal risk profile.",
+        "The app shows market context and modeled margin. It does not replace a lender's credit decision and does not know your personal risk profile.",
       items: [
         "Loan-to-value, income, amortization requirements and other debt.",
         "Your relationship with the bank, savings, insurance and history.",
@@ -671,7 +712,7 @@ const copy = {
         {
           title: "Negotiation is mostly about the margin",
           body:
-            "The modeled gap is margin room over the market proxy. Actual bank funding also depends on deposits, hedging, liquidity, capital and internal pricing.",
+            "The modeled gap is margin over the market proxy. Actual bank funding also depends on deposits, hedging, liquidity, capital and internal pricing.",
         },
       ],
     },
@@ -767,6 +808,9 @@ appRoot.addEventListener("click", (event) => {
     send({ type: "SELECT_DURATION", periodLabel: button.dataset.period });
     scrollRangeResultIntoView();
   }
+  if (action === "set-review-mode" && isReviewMode(button.dataset.mode)) {
+    send({ type: "VIEW_REVIEW", mode: button.dataset.mode });
+  }
   if (action === "view-pipeline") send({ type: "VIEW_PIPELINE" });
   if (action === "close-pipeline") send({ type: "CLOSE_PIPELINE" });
   if (action === "retry") loadSnapshot();
@@ -821,8 +865,7 @@ function renderApp(): string {
   const snapshot = snapshotFromState(state);
   const kpis = snapshot ? deriveDashboardKpis(snapshot) : null;
   const negotiationOptions = snapshot?.negotiationOptions ?? [];
-  const selectedPeriod =
-    state.value === "duration_selected" ? state.selectedPeriod : null;
+  const selectedPeriod = state.value === "ready" ? state.selectedPeriod : null;
   const selectedOption =
     negotiationOptions.find((option) => option.periodLabel === selectedPeriod) ??
     null;
@@ -839,16 +882,6 @@ function renderApp(): string {
         <p>${escapeHtml(labels.heroBody)}</p>
       </section>
       ${
-        snapshot && kpis
-          ? renderFreshnessPanel(
-              labels.freshness,
-              snapshot,
-              kpis,
-              state.value === "stale" ? state.reason : null,
-            )
-          : ""
-      }
-      ${
         snapshot
           ? renderDurationFlow(
               labels.flow,
@@ -860,45 +893,51 @@ function renderApp(): string {
           : ""
       }
       ${
-        snapshot && selectedRange
-          ? renderProgressiveSection(
-              labels.charts.aria,
-              renderInsightCharts(labels.charts, negotiationOptions, selectedRange, snapshot),
-              "evidence-section",
-              "chart",
+        snapshot && kpis && !selectedRange && snapshotStaleReason(snapshot)
+          ? renderFreshnessPanel(
+              labels.freshness,
+              snapshot,
+              kpis,
+              snapshotStaleReason(snapshot),
             )
           : ""
       }
       ${
-        snapshot && selectedRange
-          ? renderProgressiveSection(
-              labels.limitations.title,
-              renderLimitations(labels.limitations),
-              "limitations-section",
-              "shield",
+        snapshot && kpis && selectedRange && state.value === "ready"
+          ? renderReviewModeSection(
+              labels,
+              state.mode === "choose_period" ? "trust_review" : state.mode,
+              snapshot,
+              kpis,
+              negotiationOptions,
+              selectedRange,
+              snapshotStaleReason(snapshot),
             )
           : ""
       }
-      ${renderFundingIntro(labels.fundingIntro)}
-      ${renderCaisseSection(labels.caisse)}
-      ${kpis && snapshot ? renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks) : ""}
       ${
         snapshot &&
-        (state.value === "ready_unselected" || state.value === "duration_selected")
+        state.value === "ready" &&
+        state.selectedPeriod
           ? renderPipelineTeaser(labels.pipeline)
           : ""
       }
-      ${snapshot ? renderSourceLinksPanel(labels.sources, snapshot.sourceLinks) : ""}
-      ${renderDiagnostics(labels, snapshot)}
     </main>
   `;
 }
 
+function isReviewMode(value: string | undefined): value is ReviewMode {
+  return (
+    value === "trust_review" ||
+    value === "market_review" ||
+    value === "evidence_review" ||
+    value === "method_review"
+  );
+}
+
 function snapshotFromState(currentState: DashboardState): DashboardSnapshot | null {
   if (
-    currentState.value === "ready_unselected" ||
-    currentState.value === "duration_selected" ||
-    currentState.value === "stale" ||
+    currentState.value === "ready" ||
     currentState.value === "pipeline_inspection"
   ) {
     return currentState.snapshot;
@@ -916,7 +955,7 @@ function renderLanguageToggle(labels: AppCopy): string {
   `;
 }
 
-type FreshnessLevel = "fresh" | "watch" | "stale" | "invalid";
+type FreshnessLevel = "fresh" | Exclude<DashboardFreshnessLevel, "current">;
 
 type FreshnessMetric = {
   level: FreshnessLevel;
@@ -933,7 +972,7 @@ function renderFreshnessPanel(
   kpis: DashboardKpis,
   staleReason: string | null,
 ): string {
-  const metric = deriveFreshnessMetric(labels, snapshot, kpis, staleReason);
+  const metric = deriveFreshnessMetric(labels, snapshot, kpis);
   return `
     <section class="freshness-panel freshness-${metric.level}" aria-label="${escapeAttr(labels.title)}">
       <div>
@@ -948,7 +987,7 @@ function renderFreshnessPanel(
         ${renderFreshnessDetail(labels.snapshotAge, metric.snapshotAgeLabel)}
         ${renderFreshnessDetail(labels.marketAge, metric.marketAgeLabel)}
         ${renderFreshnessDetail(labels.sourceCount, metric.sourceCountLabel)}
-        ${renderFreshnessDetail(labels.eyebrow, labels[metric.level], `freshness-badge freshness-badge-${metric.level}`)}
+        ${renderFreshnessDetail(labels.status, labels[metric.level], `freshness-badge freshness-badge-${metric.level}`)}
       </dl>
     </section>
   `;
@@ -971,7 +1010,6 @@ function deriveFreshnessMetric(
   labels: AppCopy["freshness"],
   snapshot: DashboardSnapshot,
   kpis: DashboardKpis,
-  staleReason: string | null,
 ): FreshnessMetric {
   const generatedAt = Date.parse(snapshot.generatedAt);
   const marketDate = Date.parse(`${kpis.latestDate}T00:00:00Z`);
@@ -982,14 +1020,8 @@ function deriveFreshnessMetric(
     ? null
     : Math.max(0, Math.floor((Date.now() - marketDate) / 1000 / 60 / 60 / 24));
 
-  let level: FreshnessLevel = "fresh";
-  if (staleReason || snapshotAgeHours === null || marketAgeDays === null) {
-    level = staleReason ? "stale" : "invalid";
-  } else if (snapshotAgeHours > 36 || marketAgeDays > 7) {
-    level = "stale";
-  } else if (snapshotAgeHours > 24 || marketAgeDays > 4) {
-    level = "watch";
-  }
+  const freshness = dashboardFreshnessLevel(snapshot);
+  const level: FreshnessLevel = freshness === "current" ? "fresh" : freshness;
 
   return {
     level,
@@ -1022,6 +1054,104 @@ function formatFreshnessAge(
   pluralLabel: string,
 ): string {
   return count === 1 ? singularLabel : pluralLabel.replace("{count}", String(count));
+}
+
+function renderReviewModeSection(
+  labels: AppCopy,
+  mode: ReviewMode,
+  snapshot: DashboardSnapshot,
+  kpis: DashboardKpis,
+  options: NegotiationOption[],
+  range: NegotiationRange,
+  staleReason: string | null,
+): string {
+  return `
+    <section class="review-panel">
+      <div class="review-header">
+        <div>
+          <p class="eyebrow">${escapeHtml(labels.review.label)}</p>
+          <h2>${escapeHtml(reviewTitle(labels, mode))}</h2>
+          <p>${escapeHtml(reviewBody(labels, mode))}</p>
+        </div>
+        ${renderReviewTabs(labels.review, mode)}
+      </div>
+      <div class="review-body">
+        ${renderReviewBody(labels, mode, snapshot, kpis, options, range, staleReason)}
+      </div>
+    </section>
+  `;
+}
+
+function renderReviewTabs(labels: AppCopy["review"], activeMode: ReviewMode): string {
+  const modes: Array<{ mode: ReviewMode; label: string; icon: IconName }> = [
+    { mode: "trust_review", label: labels.trust, icon: "shield" },
+    { mode: "market_review", label: labels.market, icon: "bank" },
+    { mode: "evidence_review", label: labels.evidence, icon: "chart" },
+    { mode: "method_review", label: labels.method, icon: "database" },
+  ];
+  return `
+    <div class="review-tabs" role="tablist" aria-label="${escapeAttr(labels.label)}">
+      ${modes
+        .map(
+          (item) => `
+            <button
+              aria-selected="${item.mode === activeMode}"
+              class="review-tab"
+              data-action="set-review-mode"
+              data-mode="${item.mode}"
+              role="tab"
+              type="button"
+            >
+              ${renderIcon(item.icon)}
+              ${escapeHtml(item.label)}
+            </button>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderReviewBody(
+  labels: AppCopy,
+  mode: ReviewMode,
+  snapshot: DashboardSnapshot,
+  kpis: DashboardKpis,
+  options: NegotiationOption[],
+  range: NegotiationRange,
+  staleReason: string | null,
+): string {
+  if (mode === "trust_review") {
+    return `
+      ${renderFreshnessPanel(labels.freshness, snapshot, kpis, staleReason)}
+      ${renderLimitations(labels.limitations)}
+    `;
+  }
+  if (mode === "market_review") {
+    return renderKpiGrid(kpis, labels.rates, snapshot.sourceLinks);
+  }
+  if (mode === "evidence_review") {
+    return renderInsightCharts(labels.charts, options, range, snapshot);
+  }
+  return `
+    ${renderFundingIntro(labels.fundingIntro)}
+    ${renderCaisseSection(labels.caisse)}
+    ${renderSourceLinksPanel(labels.sources, snapshot.sourceLinks)}
+  `;
+}
+
+function reviewTitle(labels: AppCopy, mode: ReviewMode): string {
+  if (mode === "trust_review") return labels.review.trust;
+  if (mode === "market_review") return labels.review.market;
+  if (mode === "evidence_review") return labels.review.evidence;
+  return labels.review.method;
+}
+
+function reviewBody(labels: AppCopy, mode: ReviewMode): string {
+  if (mode === "trust_review") return labels.review.trustBody;
+  if (mode === "market_review") return labels.review.marketBody;
+  if (mode === "evidence_review") return labels.review.evidenceBody;
+  return labels.review.methodBody;
 }
 
 function renderFundingIntro(labels: AppCopy["fundingIntro"]): string {
@@ -1571,7 +1701,6 @@ function renderDiagnostics(labels: AppCopy, snapshot: DashboardSnapshot | null):
               .join("")}
           </dl>
         </details>
-        ${state.value === "stale" ? `<p>${escapeHtml(state.reason)}</p>` : ""}
         ${state.value === "error" ? `<p>${escapeHtml(state.message)}</p>` : ""}
         ${
           state.value === "empty"
